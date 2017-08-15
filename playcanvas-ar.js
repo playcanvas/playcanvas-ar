@@ -3,16 +3,38 @@
 ///////////////////////////////////////////////////////////////////////////////
 var ArCamera = pc.createScript('arCamera');
 
-ArCamera.attributes.add('datFile', { type: 'asset' });
-ArCamera.attributes.add('thresholdMode', { type: 'number', enum: [
+ArCamera.attributes.add('cameraCalibration', { 
+    type: 'asset',
+    title: 'Calibration File',
+    description: 'Data file containing the calibration properties for the camera to be used'
+});
+ArCamera.attributes.add('thresholdMode', { 
+    type: 'number', 
+    enum: [
         { 'Manual': 0 },
         { 'Median': 1 },
         { 'Otsu': 2 },
         { 'Adaptive': 3 }
-    ]
+    ],
+    default: 0,
+    title: 'Threshold Mode',
+    description: 'The thresholding mode to use. The standard ARToolKit options are available: Manual, Median, Otsu, Adaptive.'
 });
-ArCamera.attributes.add('threshold', { type: 'number', min: 0, max: 255, precision: 0, default: 100 });
-ArCamera.attributes.add('videoTexture', { type: 'boolean', default: true });
+ArCamera.attributes.add('threshold', {
+    type: 'number',
+    min: 0,
+    max: 255,
+    precision: 0,
+    default: 100,
+    title: 'Threshold',
+    description: 'The binarization threshold is an 8-bit number that is in the range [0, 255], inclusive. The default value is 100, allowing ARToolKit to easily find markers in images that have good contrast. This value is only used when the mode is set to Manual.'
+});
+ArCamera.attributes.add('videoTexture', {
+    type: 'boolean',
+    default: true,
+    title: 'Video Texture',
+    description: 'Streams the camera feed to a video texture if enabled. Otherwise, a video DOM element is used.'
+});
 
 
 ArCamera.prototype.useDom = function () {
@@ -204,7 +226,7 @@ ArCamera.prototype.initialize = function () {
     this.cameraParam.onload = function () {
         self.cameraParamLoaded = true;
     };
-    this.cameraParam.src = this.datFile.getFileUrl();
+    this.cameraParam.src = this.cameraCalibration.getFileUrl();
 
     var constraints = {
         audio: false,
@@ -307,10 +329,29 @@ ArCamera.prototype.update = function(dt) {
 ///////////////////////////////////////////////////////////////////////////////
 var ArMarker = pc.createScript('arMarker');
 
-ArMarker.attributes.add('pattern', { type: 'asset' });
-ArMarker.attributes.add('width', { type: 'number', default: 1 });
-ArMarker.attributes.add('deactivationTime', { type: 'number', default: 0.25 });
-ArMarker.attributes.add('shadow', { type: 'boolean', default: true });
+ArMarker.attributes.add('pattern', {
+    type: 'asset',
+    title: 'Pattern',
+    description: 'The marker pattern to track. This can be the Hiro or Kanji markers or a marker you have generated yourself.'
+});
+ArMarker.attributes.add('width', {
+    type: 'number',
+    default: 1,
+    title: 'Width',
+    description: 'The width of the marker'
+});
+ArMarker.attributes.add('deactivationTime', {
+    type: 'number',
+    default: 0.25,
+    title: 'Deactivation Time',
+    description: 'The time in seconds from when a marker is lost before its children are deactivated.'
+});
+ArMarker.attributes.add('shadow', {
+    type: 'boolean',
+    default: true,
+    title: 'Shadow',
+    description: 'Enable this option to generate shadows in the plane of the marker that blend with the camera feed.'
+});
 
 ArMarker.shadowMaterial = null;
 
