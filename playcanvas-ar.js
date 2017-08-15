@@ -164,6 +164,27 @@ ArCamera.prototype.onResize = function () {
         var material = this.entity.model.model.meshInstances[0].material;
         material.setParameter('uVideoSize', new Float32Array([vw, vh]));
         material.setParameter('uCanvasSize', new Float32Array([cw, ch]));
+
+        var camMatrix = this.arController.getCameraMatrix();
+        var fovy = 2 * Math.atan(1 / camMatrix[5]) * 180 / Math.PI;
+
+        if (cw / ch > vw / vh) {
+            // Video Y FOV is limited so we must limit 3D camera FOV to match
+            this.entity.camera.fov = Math.abs(fovy) * (vw / vh) / (cw / ch);
+        } else {
+            // Use AR Toolkit's Y FOV directly
+            this.entity.camera.fov = Math.abs(fovy);
+        }
+    }
+};
+
+
+ArCamera.prototype.startVideo = function () {
+    this.video.play();
+    if (this.videoTexture) {
+        this.useVideoTexture();
+    } else {
+        this.useDom();
     }
 };
 
@@ -174,13 +195,8 @@ ArCamera.prototype.initialize = function () {
     // Create the video element to receive the camera stream
     var video = document.createElement('video');
     this.video = video;
+    this.videoPlaying = false;
     
-    if (this.videoTexture) {
-        this.useVideoTexture();
-    } else {
-        this.useDom();
-    }
-
     this.arController = null;
     this.cameraParamLoaded = false;
 
@@ -199,14 +215,24 @@ ArCamera.prototype.initialize = function () {
     };
 
     navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
+        video.srcObject = stream;
+
+        // Only play the video when it's actually ready
+        video.addEventListener('canplay', function () {
+            if (!self.videoPlaying) {
+                self.startVideo();
+                self.videoPlaying = true;
+            }
+        });
+
         // iOS needs a user action to start the video
         window.addEventListener('touchstart', function (e) {
             e.preventDefault();
-            video.play();
+            if (!self.videoPlaying) {
+                self.startVideo();
+                self.videoPlaying = true;
+            }
         }, true);
-
-        video.srcObject = stream;
-        video.play();
     }).catch(function (e) {
         console.error("Unable to acquire camera stream", e);
     });
@@ -253,27 +279,6 @@ ArCamera.prototype.update = function(dt) {
             this.arController = arController;
             this.arController.setThreshold(Math.floor(this.threshold));
             this.arController.setThresholdMode(this.thresholdModes[this.thresholdMode]);                
-
-            var camMatrix = this.arController.getCameraMatrix();
-
-            var aa = camMatrix[0];
-            var bb = camMatrix[5];
-            var cc = camMatrix[10];
-            var dd = camMatrix[14];
-
-            var aspectRatio = bb / aa;
-            var fovy = 2 * Math.atan(1 / bb) * 180 / Math.PI;
-
-            var kk = (cc - 1) / (cc + 1);
-            var nearClip = (dd * (1 - kk)) / (2 * kk);
-            var farClip = kk * nearClip;
-
-            var w = this.app.graphicsDevice.width;
-            var h = this.app.graphicsDevice.height;
-            aspectRatio = w / h;
-
-            e.camera.aspectRatio = Math.abs(aspectRatio);
-            e.camera.fov = Math.abs(fovy);
 
             // Flip the camera to match ARToolkit's coordinate system,
             // ignoring whatever is set up in the Editor
@@ -325,9 +330,12 @@ ArMarker.prototype.createShadow = function () {
     if (!ArMarker.shadowMaterial) {
         var material = new pc.StandardMaterial();
         material.chunks.lightDiffuseLambertPS = "float getLightDiffuse() { return 1.0; }";
+
+        material.chunks.opacityConstPS = "uniform float material_opacity; void getOpacity() { dAlpha = material_opacity; }";
         material.diffuse.set(1, 1, 1);
         material.specular.set(0, 0, 0);
-        material.blendType = pc.BLEND_MULTIPLICATIVE;
+        material.blendType = pc.BLEND_NORMAL;
+        material.opacity = 0.5;
         material.useGammaTonemap = false;
         material.useFog = false;
         material.useSkybox = false;
