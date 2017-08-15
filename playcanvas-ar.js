@@ -36,7 +36,6 @@ ArCamera.attributes.add('videoTexture', {
     description: 'Streams the camera feed to a video texture if enabled. Otherwise, a video DOM element is used.'
 });
 
-
 ArCamera.prototype.useDom = function () {
     if  (this.entity.model) {
         this.entity.removeComponent('model');
@@ -286,13 +285,12 @@ ArCamera.prototype.initialize = function () {
         console.error("Unable to acquire camera stream", e);
     });
 
-    // Handle attribute changes
     this.thresholdModes = [
         artoolkit.AR_LABELING_THRESH_MODE_MANUAL,
         artoolkit.AR_LABELING_THRESH_MODE_AUTO_MEDIAN,
         artoolkit.AR_LABELING_THRESH_MODE_AUTO_OTSU,
         artoolkit.AR_LABELING_THRESH_MODE_AUTO_ADAPTIVE
-    ];
+    ];    
 
     this.on('attr:videoTexture', function (value, prev) {
         if (value) {
@@ -357,6 +355,14 @@ ArMarker.attributes.add('shadow', {
     title: 'Shadow',
     description: 'Enable this option to generate shadows in the plane of the marker that blend with the camera feed.'
 });
+ArMarker.attributes.add('shadowStrength', {
+    type: 'number',
+    default: 1,
+    min: 0,
+    max: 1,
+    title: 'Shadow Strength',
+    description: 'Control the strength of the shadow. 1 is full strength and 0 is disabled.'
+});
 
 ArMarker.shadowMaterial = null;
 
@@ -376,12 +382,10 @@ ArMarker.prototype.createShadow = function () {
     if (!ArMarker.shadowMaterial) {
         var material = new pc.StandardMaterial();
         material.chunks.lightDiffuseLambertPS = "float getLightDiffuse() { return 1.0; }";
-
-        material.chunks.opacityConstPS = "uniform float material_opacity; void getOpacity() { dAlpha = material_opacity; }";
         material.diffuse.set(1, 1, 1);
         material.specular.set(0, 0, 0);
-        material.blendType = pc.BLEND_NORMAL;
-        material.opacity = 0.5;
+        material.emissive.set(1 - this.shadowStrength, 1 - this.shadowStrength, 1 - this.shadowStrength);
+        material.blendType = pc.BLEND_MULTIPLICATIVE;
         material.useGammaTonemap = false;
         material.useFog = false;
         material.useSkybox = false;
@@ -449,7 +453,14 @@ ArMarker.prototype.initialize = function () {
         else
             this.destroyShadow();
     });
-    
+
+    this.on('attr:shadowStrength', function (value, prev) {
+        if (ArMarker.shadowMaterial) {
+            ArMarker.shadowMaterial.emissive.set(1 - value, 1 - value, 1 - value);
+            ArMarker.shadowMaterial.update();
+        }
+    });
+
     this.hideChildren();
 };
 
