@@ -177,29 +177,31 @@ ArCamera.prototype.useVideoTexture = function () {
 };
 
 ArCamera.prototype.onResize = function () {
+    var device = this.app.graphicsDevice;
+    var cw = device.width;
+    var ch = device.height;
+    var vw = this.video.videoWidth;
+    var vh = this.video.videoHeight;
+
+    // Resize the video texture
     if (this.entity.model) {
-        var device = this.app.graphicsDevice;
-        var cw = device.width;
-        var ch = device.height;
-        var vw = this.video.videoWidth;
-        var vh = this.video.videoHeight;
         var material = this.entity.model.model.meshInstances[0].material;
         material.setParameter('uVideoSize', new Float32Array([vw, vh]));
         material.setParameter('uCanvasSize', new Float32Array([cw, ch]));
+    }
 
-        var camMatrix = this.arController.getCameraMatrix();
-        var fovy = 2 * Math.atan(1 / camMatrix[5]) * 180 / Math.PI;
+    // Resize the 3D camera frustum (via the fov)
+    var camMatrix = this.arController.getCameraMatrix();
+    var fovy = 2 * Math.atan(1 / camMatrix[5]) * 180 / Math.PI;
 
-        if (cw / ch > vw / vh) {
-            // Video Y FOV is limited so we must limit 3D camera FOV to match
-            this.entity.camera.fov = Math.abs(fovy) * (vw / vh) / (cw / ch);
-        } else {
-            // Use AR Toolkit's Y FOV directly
-            this.entity.camera.fov = Math.abs(fovy);
-        }
+    if (cw / ch > vw / vh) {
+        // Video Y FOV is limited so we must limit 3D camera FOV to match
+        this.entity.camera.fov = Math.abs(fovy) * (vw / vh) / (cw / ch);
+    } else {
+        // Use AR Toolkit's Y FOV directly
+        this.entity.camera.fov = Math.abs(fovy);
     }
 };
-
 
 ArCamera.prototype.startVideo = function () {
     this.video.play();
@@ -210,10 +212,27 @@ ArCamera.prototype.startVideo = function () {
     }
 };
 
+ArCamera.prototype.createArController = function () {
+    this.arController = new ARController(this.video, this.cameraParam);
+    this.arController.setProjectionNearPlane(this.entity.camera.nearClip);
+    this.arController.setProjectionFarPlane(this.entity.camera.farClip);
+    this.arController.setThreshold(Math.floor(this.threshold));
+    this.arController.setThresholdMode(this.thresholdModes[this.thresholdMode]);
+    this.app.fire('ar:controllercreate', this.arController);
+
+    this.onResize();
+};
+
 // initialize code called once per entity
 ArCamera.prototype.initialize = function () {
     var self = this;
 
+    // Flip the camera to match ARToolkit's coordinate system,
+    // ignoring whatever is set up in the Editor
+    this.entity.setEulerAngles(0, 180, 180);
+    this.entity.setPosition(0, 0, 0);
+    this.entity.setLocalScale(1, 1, 1);
+    
     // Create the video element to receive the camera stream
     var video = document.createElement('video');
     this.video = video;
@@ -239,22 +258,30 @@ ArCamera.prototype.initialize = function () {
     navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
         video.srcObject = stream;
 
-        // Only play the video when it's actually ready
-        video.addEventListener('canplay', function () {
-            if (!self.videoPlaying) {
-                self.startVideo();
-                self.videoPlaying = true;
-            }
-        });
-
-        // iOS needs a user action to start the video
-        window.addEventListener('touchstart', function (e) {
-            e.preventDefault();
-            if (!self.videoPlaying) {
-                self.startVideo();
-                self.videoPlaying = true;
-            }
-        }, true);
+        if (pc.platform.mobile) {
+            // iOS needs a user action to start the video
+            window.addEventListener('touchstart', function (e) {
+                e.preventDefault();
+                if (!self.videoPlaying) {
+                    self.startVideo();
+                    if (self.cameraParamLoaded && self.video.videoWidth) {
+                        self.createArController();
+                    }
+                    self.videoPlaying = true;
+                }
+            }, true);
+        } else {
+            // Only play the video when it's actually ready
+            video.addEventListener('canplay', function () {
+                if (!self.videoPlaying) {
+                    self.startVideo();
+                    if (self.cameraParamLoaded && self.video.videoWidth) {
+                        self.createArController();
+                    }
+                    self.videoPlaying = true;
+                }
+            });
+        }
     }).catch(function (e) {
         console.error("Unable to acquire camera stream", e);
     });
@@ -290,34 +317,12 @@ ArCamera.prototype.initialize = function () {
 
 // update code called every frame
 ArCamera.prototype.update = function(dt) {
-    if (!this.arController) {
-        if (this.cameraParamLoaded && this.video.videoWidth) {
-            var e = this.entity;
-
-            var arController = new ARController(this.video, this.cameraParam);
-            arController.setProjectionNearPlane(e.camera.nearClip);
-            arController.setProjectionFarPlane(e.camera.farClip);
-
-            this.arController = arController;
-            this.arController.setThreshold(Math.floor(this.threshold));
-            this.arController.setThresholdMode(this.thresholdModes[this.thresholdMode]);                
-
-            // Flip the camera to match ARToolkit's coordinate system,
-            // ignoring whatever is set up in the Editor
-            e.setEulerAngles(0, 180, 180);
-            e.setPosition(0, 0, 0);
-            e.setLocalScale(1, 1, 1);
-
-            this.app.fire('ar:controllercreate', arController);
-            
-            this.onResize();
-        }
-    } else {
+    if (this.arController) {
         // Update the tracking
         this.arController.process();
 
         // If we're displaying video via a texture, copy the video frame into the texture
-        if (this.videoTexture) {
+        if (this.videoTexture && this.texture) {
             this.texture.upload();
         }
     }
