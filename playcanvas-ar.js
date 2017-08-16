@@ -187,6 +187,8 @@ ArCamera.prototype.useVideoTexture = function () {
 };
 
 ArCamera.prototype.onResize = function () {
+    if (!this.arController) return;
+    
     var device = this.app.graphicsDevice;
     var cw = device.width;
     var ch = device.height;
@@ -231,9 +233,23 @@ ArCamera.prototype.createArController = function () {
     this.arController.setProjectionFarPlane(this.entity.camera.farClip);
     this.arController.setThreshold(Math.floor(this.threshold));
     this.arController.setThresholdMode(this.thresholdModes[this.thresholdMode]);
-    this.app.fire('ar:controllercreate', this.arController);
 
     this.onResize();
+
+    // Notify all markers that tracking is initialized
+    this.app.fire('trackinginitialized', this.arController);
+};
+
+ArCamera.prototype.startTracking = function () {
+    if (!this.cameraCalibration) {
+        console.error('ERROR: No camera calibration file set on your arCamera script.');
+    }
+
+    var self = this;
+    var url = this.cameraCalibration.getFileUrl();
+    this.cameraParam = new ARCameraParam(url, function () {
+        self.createArController();
+    });
 };
 
 // initialize code called once per entity
@@ -252,17 +268,17 @@ ArCamera.prototype.initialize = function () {
     video.setAttribute('muted', '');
     video.setAttribute('playsinline', ''); // This is critical for iOS or the video initially goes fullscreen
 
+    // Check for both video and canvas resizing
+    // Changing screen orientation on mobile can change both!
+    video.addEventListener('resize', function () {
+        self.onResize();
+    });
+    this.app.graphicsDevice.on('resizecanvas', function () {
+        self.onResize();
+    });
+    
     this.video = video;
     this.videoPlaying = false;
-    
-    this.arController = null;
-    this.cameraParamLoaded = false;
-
-    this.cameraParam = new ARCameraParam();
-    this.cameraParam.onload = function () {
-        self.cameraParamLoaded = true;
-    };
-    this.cameraParam.src = this.cameraCalibration.getFileUrl();
 
     var constraints = {
         audio: false,
@@ -281,9 +297,7 @@ ArCamera.prototype.initialize = function () {
                 e.preventDefault();
                 if (!self.videoPlaying) {
                     self.startVideo();
-                    if (self.cameraParamLoaded && self.video.videoWidth) {
-                        self.createArController();
-                    }
+                    self.startTracking();
                     self.videoPlaying = true;
                 }
             }, true);
@@ -292,17 +306,16 @@ ArCamera.prototype.initialize = function () {
             video.addEventListener('canplay', function () {
                 if (!self.videoPlaying) {
                     self.startVideo();
-                    if (self.cameraParamLoaded && self.video.videoWidth) {
-                        self.createArController();
-                    }
+                    self.startTracking();
                     self.videoPlaying = true;
                 }
             });
         }
     }).catch(function (e) {
-        console.error("Unable to acquire camera stream", e);
+        console.error("ERROR: Unable to acquire camera stream", e);
     });
 
+    // Handle attribute changes from Editor
     this.thresholdModes = [
         artoolkit.AR_LABELING_THRESH_MODE_MANUAL,
         artoolkit.AR_LABELING_THRESH_MODE_AUTO_MEDIAN,
@@ -327,13 +340,12 @@ ArCamera.prototype.initialize = function () {
         if (this.arController)
             this.arController.setThresholdMode(this.thresholdModes[value]);
     });
-
-    this.app.graphicsDevice.on("resizecanvas", this.onResize, this);
 };
 
 // update code called every frame
 ArCamera.prototype.update = function(dt) {
     if (this.arController) {
+
         // Update the tracking
         this.arController.process();
 
@@ -428,7 +440,7 @@ ArMarker.prototype.destroyShadow = function () {
         this.shadowEntity = null;
     }
 };
-    
+
 // initialize code called once per entity
 ArMarker.prototype.initialize = function () {
     var self = this;
@@ -439,7 +451,7 @@ ArMarker.prototype.initialize = function () {
     this.markerMatrix = new pc.Mat4();
     this.lastSeen = -1;
 
-    this.app.on('ar:controllercreate', function (arController) {
+    this.app.on('trackinginitialized', function (arController) {
         arController.loadMarker(self.pattern.getFileUrl(), function (markerId) {
             self.markerId = markerId;
         });
