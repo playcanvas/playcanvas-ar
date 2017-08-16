@@ -60,6 +60,17 @@ ArCamera.prototype.useDom = function () {
     this.app.graphicsDevice.canvas.style.zIndex = '1';
 };
 
+// MEGA HACK FOR IOS
+// The video pauses when exiting fullscreen if the video element is not added to the DOM
+ArCamera.prototype.addVideoToDom = function () {
+    var style = this.video.style;
+    style.position = 'absolute';
+    style.width = '1%';
+    style.height = '1%';
+
+    document.body.appendChild(this.video);
+};
+
 ArCamera.prototype.useVideoTexture = function () {
     // If the video is already in the DOM, remove it
     if (this.video.parentElement)
@@ -170,7 +181,7 @@ ArCamera.prototype.useVideoTexture = function () {
     var model = new pc.Model();
     model.graph = node;
     model.meshInstances = [ meshInstance ];
-    
+
     this.entity.addComponent('model', { type: 'asset' });
     this.entity.model.model = model;
 };
@@ -183,7 +194,7 @@ ArCamera.prototype.onResize = function () {
     var vh = this.video.videoHeight;
 
     // Resize the video texture
-    if (this.entity.model) {
+    if (this.entity.model && this.entity.model.model) {
         var material = this.entity.model.model.meshInstances[0].material;
         material.setParameter('uVideoSize', new Float32Array([vw, vh]));
         material.setParameter('uCanvasSize', new Float32Array([cw, ch]));
@@ -203,9 +214,12 @@ ArCamera.prototype.onResize = function () {
 };
 
 ArCamera.prototype.startVideo = function () {
-    this.video.play();
     if (this.videoTexture) {
         this.useVideoTexture();
+
+        // NASTY NASTY HACK
+        if (pc.platform.ios)
+            this.addVideoToDom();
     } else {
         this.useDom();
     }
@@ -234,6 +248,10 @@ ArCamera.prototype.initialize = function () {
     
     // Create the video element to receive the camera stream
     var video = document.createElement('video');
+	video.setAttribute('autoplay', '');
+	video.setAttribute('muted', '');
+	video.setAttribute('playsinline', ''); // This is critical for iOS or the video initially goes fullscreen
+
     this.video = video;
     this.videoPlaying = false;
     
@@ -268,6 +286,7 @@ ArCamera.prototype.initialize = function () {
                     }
                     self.videoPlaying = true;
                 }
+                self.video.play();
             }, true);
         } else {
             // Only play the video when it's actually ready
@@ -389,6 +408,7 @@ ArMarker.prototype.createShadow = function () {
         material.useGammaTonemap = false;
         material.useFog = false;
         material.useSkybox = false;
+        material.depthWrite = false;
         material.update();
         
         ArMarker.shadowMaterial = material;
