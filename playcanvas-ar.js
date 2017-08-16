@@ -245,12 +245,12 @@ ArCamera.prototype.initialize = function () {
     this.entity.setEulerAngles(0, 180, 180);
     this.entity.setPosition(0, 0, 0);
     this.entity.setLocalScale(1, 1, 1);
-    
+
     // Create the video element to receive the camera stream
     var video = document.createElement('video');
-	video.setAttribute('autoplay', '');
-	video.setAttribute('muted', '');
-	video.setAttribute('playsinline', ''); // This is critical for iOS or the video initially goes fullscreen
+    video.setAttribute('autoplay', '');
+    video.setAttribute('muted', '');
+    video.setAttribute('playsinline', ''); // This is critical for iOS or the video initially goes fullscreen
 
     this.video = video;
     this.videoPlaying = false;
@@ -286,7 +286,6 @@ ArCamera.prototype.initialize = function () {
                     }
                     self.videoPlaying = true;
                 }
-                self.video.play();
             }, true);
         } else {
             // Only play the video when it's actually ready
