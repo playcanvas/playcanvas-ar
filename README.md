@@ -18,5 +18,12 @@ PlayCanvas provides an advanced WebGL graphics engine. It supports the latest We
 2. Fork the [AR Starter Kit](https://playcanvas.com/project/481413/overview) project (which contains the latest version of playcanvas-ar.js).
 3. Hit the launch button and see AR in action (we recommend using your mobile device!).
 
+## Supported Operating Systems and Browsers
+* Android 4.0+ (Chrome 21+)
+* iOS 11+ (Safari 11+, Chrome 21+, Firefox 17+)
+* Windows XP+ (Chrome 21+, Firefox 17+, Opera 18+, Edge 12+)
+* macOS (Safari 11+, Chrome 21+, Firefox 17+, Opera 18+)
+* Linux (Chrome 21+, Firefox 17+, Opera 18+)
+
 ## Join the fun!
 AR is fun, so why not get involved? Find a bug? Need a feature? Want to contribute something? Add an issue!
