@@ -177,7 +177,7 @@ ArCamera.prototype.useVideoTexture = function () {
     var node = new pc.GraphNode();
 
     var meshInstance = new pc.MeshInstance(node, mesh, material);
-    
+
     var model = new pc.Model();
     model.graph = node;
     model.meshInstances = [ meshInstance ];
@@ -227,29 +227,26 @@ ArCamera.prototype.startVideo = function () {
     }
 };
 
-ArCamera.prototype.createArController = function () {
-    this.arController = new ARController(this.video, this.cameraParam);
-    this.arController.setProjectionNearPlane(this.entity.camera.nearClip);
-    this.arController.setProjectionFarPlane(this.entity.camera.farClip);
-    this.arController.setThreshold(Math.floor(this.threshold));
-    this.arController.setThresholdMode(this.thresholdModes[this.thresholdMode]);
-
-    this.onResize();
-
-    // Notify all markers that tracking is initialized
-    this.app.fire('trackinginitialized', this.arController);
-};
-
-ArCamera.prototype.startTracking = function () {
+ArCamera.prototype.startTracking = function (w, h) {
     if (!this.cameraCalibration) {
         console.error('ERROR: No camera calibration file set on your arCamera script.');
     }
 
-    var self = this;
+    // Load the camera calibration data
     var url = this.cameraCalibration.getFileUrl();
     this.cameraParam = new ARCameraParam(url, function () {
-        self.createArController();
-    });
+        // Create a new AR controller
+        this.arController = new ARController(w, h, this.cameraParam);
+        this.arController.setProjectionNearPlane(this.entity.camera.nearClip);
+        this.arController.setProjectionFarPlane(this.entity.camera.farClip);
+        this.arController.setThreshold(Math.floor(this.threshold));
+        this.arController.setThresholdMode(this.thresholdModes[this.thresholdMode]);
+
+        this.onResize();
+
+        // Notify all markers that tracking is initialized
+        this.app.fire('trackinginitialized', this.arController);
+    }.bind(this));
 };
 
 // initialize code called once per entity
@@ -297,7 +294,7 @@ ArCamera.prototype.initialize = function () {
                 e.preventDefault();
                 if (!self.videoPlaying) {
                     self.startVideo();
-                    self.startTracking();
+                    self.startTracking(self.video.videoWidth, self.video.videoHeight);
                     self.videoPlaying = true;
                 }
             }, true);
@@ -306,7 +303,7 @@ ArCamera.prototype.initialize = function () {
             video.addEventListener('canplay', function () {
                 if (!self.videoPlaying) {
                     self.startVideo();
-                    self.startTracking();
+                    self.startTracking(self.video.videoWidth, self.video.videoHeight);
                     self.videoPlaying = true;
                 }
             });
@@ -345,9 +342,8 @@ ArCamera.prototype.initialize = function () {
 // update code called every frame
 ArCamera.prototype.update = function(dt) {
     if (this.arController) {
-
         // Update the tracking
-        this.arController.process();
+        this.arController.process(this.video);
 
         // If we're displaying video via a texture, copy the video frame into the texture
         if (this.videoTexture && this.texture) {
@@ -426,7 +422,7 @@ ArMarker.prototype.createShadow = function () {
     }
     
     this.shadowEntity = new pc.Entity('Shadow');
-    this.shadowEntity.addComponent('model', { type: 'plane'});
+    this.shadowEntity.addComponent('model', { type: 'plane', castShadows: false });
     this.shadowEntity.model.material = ArMarker.shadowMaterial;
     this.shadowEntity.setLocalScale(5, 5, 5);
 
