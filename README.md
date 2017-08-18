@@ -5,6 +5,11 @@ PlayCanvasAR makes it *easy* to build *lightning fast* augmented reality applica
 
 But if you want to create something more interactive, you can call on the full power of the [PlayCanvas scripting API](https://developer.playcanvas.com/en/api/).
 
+## Demo
+Before you begin, print out the following markers: [Hiro](https://github.com/artoolkit/artoolkit5/blob/master/doc/patterns/Hiro%20pattern.pdf) and [Kanji](https://github.com/artoolkit/artoolkit5/blob/master/doc/patterns/Kanji%20pattern.pdf).
+
+Now click [here](https://playcanv.as/p/eJ1ygzym/) for a demonstration. We recommend running it on mobile (but if you use iOS, make sure you are on version 11).
+
 ## Performance
 PlayCanvasAR delivers 60 frames per second, even on mobile.
 
