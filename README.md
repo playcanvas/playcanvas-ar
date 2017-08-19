@@ -17,10 +17,54 @@ Now click [here](https://playcanv.as/p/eJ1ygzym/) for a demonstration. We recomm
 * **Incredible Visuals** - PlayCanvas provides an advanced WebGL graphics engine. It supports the latest WebGL 2 graphics API and implements Physically Based Rendering to achieve incredible visuals for your AR applications. And yes, that's open sourced too.
 
 ## Getting Started with PlayCanvasAR
-
 1. Create an account on [playcanvas.com](https://playcanvas.com) (if you haven't already).
 2. Fork the [AR Starter Kit](https://playcanvas.com/project/481413/overview) project (which contains the latest version of playcanvas-ar.js).
 3. Hit the launch button and see AR in action (we recommend using your mobile device!).
+
+## Scripting with PlayCanvasAR
+
+The PlayCanvas Editor allows you to build your AR apps visually. But you may want to create AR powered entities programmatically. Or you may want to build AR apps by simply using the PlayCanvas Engine without the Editor. PlayCanvas AR exposes two script objects: 'arCamera' and 'arMarker'. 'Engine-only' scripting examples can be found in the examples folder.
+
+### arCamera
+
+This code creates an AR-enabled camera:
+
+```
+var camera = new pc.Entity("AR Camera");
+camera.addComponent("camera", {
+    clearColor: new pc.Color(0, 0, 0, 0)
+});
+camera.addComponent("script");
+camera.script.create("arCamera", {
+    attributes: {
+        cameraCalibration: asset,
+        thresholdMode: 0,
+        threshold: 100,
+        videoTexture: true
+    }
+});
+app.root.addChild(camera);
+```
+
+### arMarker
+
+This code creates an AR marker entity:
+
+```
+// Creat the marker entity
+var hiro = new pc.Entity("Hiro Marker");
+hiro.addComponent("script");
+hiro.script.create("arMarker", {
+    attributes: {
+        pattern: asset,
+        width: 1,
+        deactivationTime: 0.25,
+        shadow: true,
+        shadowStrength: 0.5
+    }
+});
+app.root.addChild(hiro);
+```
 
 ## Supported Operating Systems and Browsers
 * Android 4.0+ (Chrome 21+)
