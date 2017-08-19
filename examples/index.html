@@ -1,0 +1,102 @@
+<!doctype html>
+<html>
+<head>
+    <script src="http://code.playcanvas.com/playcanvas-latest.js"></script>
+    <script src="../artoolkit/artoolkit.min.js"></script>
+    <script src="../playcanvas-ar.js"></script>
+    <link href="../style.css" rel="stylesheet" />
+</head>
+
+<body>
+    <!-- The canvas element -->
+    <canvas id="application-canvas"></canvas>
+
+    <!-- The script -->
+    <script>
+        var canvas = document.getElementById("application-canvas");
+
+        // Create the application and start the update loop
+        var app = new pc.Application(canvas);
+        app.start();
+
+        // Set the canvas to fill the window and automatically change resolution to be the same as the canvas size
+        app.setCanvasFillMode(pc.FILLMODE_FILL_WINDOW);
+        app.setCanvasResolution(pc.RESOLUTION_AUTO);
+
+        app.scene.ambientLight = new pc.Color(0.2, 0.2, 0.2);
+
+        // Create an AR marker using the Hiro pattern
+        var hiro = new pc.Entity("Hiro Marker");
+        hiro.addComponent("script");
+        hiro.script.create("arMarker", {
+            attributes: {
+                pattern: hiroAsset,
+                width: 1,
+                deactivationTime: 0.25,
+                shadow: true,
+                shadowStrength: 0.75
+            }
+        });
+        app.root.addChild(hiro);
+
+        // Create a box as a child of the Hiro marker
+        var box = new pc.Entity("Box");
+        box.addComponent("model", {
+            type: "box"
+        });
+        box.setLocalPosition(0, 0.5, 0);
+        hiro.addChild(box);
+
+        // Create an AR marker using the Kanji pattern
+        var kanji = new pc.Entity("Kanji Marker");
+        kanji.addComponent("script");
+        kanji.script.create("arMarker", {
+            attributes: {
+                pattern: kanjiAsset,
+                width: 1,
+                deactivationTime: 0.25,
+                shadow: true,
+                shadowStrength: 0.75
+            }
+        });
+        app.root.addChild(kanji);
+
+        // Create a cone as a child of the Kanji marker
+        var cone = new pc.Entity("Cone");
+        cone.addComponent("model", {
+            type: "cone"
+        });
+        cone.setLocalPosition(0, 0.5, 0);
+        kanji.addChild(cone);
+
+        // Create an Entity with a camera component
+        var camera = new pc.Entity("AR Camera");
+        camera.addComponent("camera", {
+            clearColor: new pc.Color(0, 0, 0, 0)
+        });
+        camera.addComponent("script");
+        camera.script.create("arCamera", {
+            attributes: {
+                cameraCalibration: kanjiAsset,
+                thresholdMode: 0, // Manual
+                threshold: 100,
+                videoTexture: true
+            }
+        });
+        app.root.addChild(camera);
+
+        // Create an Entity with a point light component and a sphere model component.
+        var light = new pc.Entity();
+        light.addComponent("light", {
+            type: "directional",
+            color: new pc.Color(1, 1, 1),
+            intensity: 1,
+            castShadows: true,
+            shadowResolution: 2048,
+            shadowDistance: 20
+        });
+        light.setLocalEulerAngles(22, 0, -16);
+        camera.addChild(light);
+    </script>
+</body>
+</html>
