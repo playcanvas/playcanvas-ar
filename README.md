@@ -10,14 +10,11 @@ Before you begin, print out the following markers: [Hiro](https://github.com/art
 
 Now click [here](https://playcanv.as/p/eJ1ygzym/) for a demonstration. We recommend running it on mobile (but if you use iOS, make sure you are on version 11).
 
-## Performance
-PlayCanvasAR delivers 60 frames per second, even on mobile.
+## Features
 
-## Tracking by ARToolkit
-PlayCanvasAR utilizes the amazing [ARToolkit](https://artoolkit.org/), an open source marker-based tracking library. Originally coded in C++, it has been [ported to JavaScript](https://github.com/artoolkit/jsartoolkit5) using [Emscripten](https://github.com/kripken/emscripten).
-
-## Visuals by PlayCanvas
-PlayCanvas provides an advanced WebGL graphics engine. It supports the latest WebGL 2 graphics API and implements Physically Based Rendering to achieve incredible visuals for your AR applications. And yes, that's open sourced too.
+* **Amazing Performance** - PlayCanvasAR delivers 60 frames per second, even on mobile.
+* **Marker-based Tracking** - PlayCanvasAR utilizes the amazing [ARToolkit](https://artoolkit.org/), an open source marker-based tracking library. Originally coded in C++, it has been [ported to JavaScript](https://github.com/artoolkit/jsartoolkit5) using [Emscripten](https://github.com/kripken/emscripten).
+* **Incredible Visuals** - PlayCanvas provides an advanced WebGL graphics engine. It supports the latest WebGL 2 graphics API and implements Physically Based Rendering to achieve incredible visuals for your AR applications. And yes, that's open sourced too.
 
 ## Getting Started with PlayCanvasAR
 
