@@ -29,7 +29,7 @@ The PlayCanvas Editor allows you to build your AR apps visually. But you may wan
 
 This code creates an AR-enabled camera:
 
-```
+```javascript
 var camera = new pc.Entity("AR Camera");
 camera.addComponent("camera", {
     clearColor: new pc.Color(0, 0, 0, 0)
@@ -50,8 +50,8 @@ app.root.addChild(camera);
 
 This code creates an AR marker entity:
 
-```
-// Creat the marker entity
+```javascript
+// Create the marker entity
 var hiro = new pc.Entity("Hiro Marker");
 hiro.addComponent("script");
 hiro.script.create("arMarker", {
