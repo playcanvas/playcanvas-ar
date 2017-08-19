@@ -182,7 +182,10 @@ ArCamera.prototype.useVideoTexture = function () {
     model.graph = node;
     model.meshInstances = [ meshInstance ];
 
-    this.entity.addComponent('model', { type: 'asset' });
+    this.entity.addComponent('model', {
+        type: 'asset',
+        castShadows: false
+    });
     this.entity.model.model = model;
 };
 
@@ -422,7 +425,10 @@ ArMarker.prototype.createShadow = function () {
     }
     
     this.shadowEntity = new pc.Entity('Shadow');
-    this.shadowEntity.addComponent('model', { type: 'plane', castShadows: false });
+    this.shadowEntity.addComponent('model', {
+        type: 'plane',
+        castShadows: false
+    });
     this.shadowEntity.model.material = ArMarker.shadowMaterial;
     this.shadowEntity.setLocalScale(5, 5, 5);
 

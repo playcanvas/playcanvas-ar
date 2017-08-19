@@ -5,12 +5,13 @@
         <script src="../artoolkit/artoolkit.min.js"></script>
     </head>
     <body style="overflow: hidden;">
-        <canvas id="playcanvas"></canvas>
         <script>
-            var canvas = document.getElementById("playcanvas");
-            canvas.style.position = 'absolute';
-            canvas.style.top = '0px';
-            canvas.style.left = '0px';
+            // Create the canvas for our application
+            var canvas = document.createElement("canvas");
+            canvas.style.position = "absolute";
+            canvas.style.top = "0px";
+            canvas.style.left = "0px";
+            document.body.appendChild(canvas);
 
             // Create the application and start the update loop
             var app = new pc.Application(canvas);
@@ -18,13 +19,15 @@
             app.setCanvasResolution(pc.RESOLUTION_AUTO);
             app.start();
 
+            // Lift scene ambient lighting up from black
+            app.scene.ambientLight = new pc.Color(0.2, 0.2, 0.2);
+
             // Load PlayCanvasAR library scripts
             app.assets.loadFromUrl("../playcanvas-ar.js", "script", function (err, asset) {
 
-                // Create the AR-enabled camera and a light
+                // Create the AR-enabled camera using generic camera calibration settings
                 app.assets.loadFromUrl("../artoolkit/calibration/camera_para.dat", "binary", function (err, asset) {
 
-                    // Create an Entity with a camera component
                     var camera = new pc.Entity("AR Camera");
                     camera.addComponent("camera", {
                         clearColor: new pc.Color(0, 0, 0, 0)
@@ -53,7 +56,7 @@
                             width: 1,
                             deactivationTime: 0.25,
                             shadow: true,
-                            shadowStrength: 0.75
+                            shadowStrength: 0.5
                         }
                     });
                     app.root.addChild(hiro);
@@ -71,10 +74,11 @@
                     light.addComponent("light", {
                         type: "directional",
                         color: new pc.Color(1, 1, 1),
-                        intensity: 1,
                         castShadows: true,
-                        shadowResolution: 2048,
-                        shadowDistance: 20
+                        shadowBias: 0.2,
+                        normalOffsetBias: 0.1,
+                        shadowDistance: 10,
+                        shadowType: pc.SHADOW_PCF5
                     });
                     light.setLocalEulerAngles(22, 0, -16);
                     hiro.addChild(light);
@@ -82,7 +86,7 @@
             });
 
             // Resize the canvas when the window is resized
-            window.addEventListener('resize', function () {
+            window.addEventListener("resize", function () {
                 app.resizeCanvas(window.innerWidth, window.innerHeight);
             });
         </script>
