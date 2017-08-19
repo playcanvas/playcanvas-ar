@@ -8,13 +8,13 @@ But if you want to create something more interactive, you can call on the full p
 ## Demo
 Before you begin, print out the following markers: [Hiro](https://github.com/artoolkit/artoolkit5/blob/master/doc/patterns/Hiro%20pattern.pdf) and [Kanji](https://github.com/artoolkit/artoolkit5/blob/master/doc/patterns/Kanji%20pattern.pdf).
 
-Now click [here](https://playcanv.as/p/eJ1ygzym/) for a demonstration. We recommend running it on mobile (but if you use iOS, make sure you are on version 11).
+Now click [here](https://playcanv.as/p/eJ1ygzym/) for a demonstration. We recommend running it on mobile. If you use iOS, you'll need iOS 11 which is now in [public beta](https://beta.apple.com/sp/betaprogram/).
 
 ## Features
 
 * **Amazing Performance** - PlayCanvasAR delivers 60 frames per second, even on mobile.
 * **Marker-based Tracking** - PlayCanvasAR utilizes the amazing [ARToolkit](https://artoolkit.org/), an open source marker-based tracking library. Originally coded in C++, it has been [ported to JavaScript](https://github.com/artoolkit/jsartoolkit5) using [Emscripten](https://github.com/kripken/emscripten).
-* **Incredible Visuals** - PlayCanvas provides an advanced WebGL graphics engine. It supports the latest WebGL 2 graphics API and implements Physically Based Rendering to achieve incredible visuals for your AR applications. And yes, that's open sourced too.
+* **Incredible Visuals** - PlayCanvas provides an advanced WebGL graphics engine. It supports the latest WebGL 2 graphics API and implements Physically Based Rendering to achieve incredible visuals for your AR applications. And yes, [that's open sourced too](https://github.com/playcanvas/engine).
 
 ## Getting Started with PlayCanvasAR
 1. Create an account on [playcanvas.com](https://playcanvas.com) (if you haven't already).
