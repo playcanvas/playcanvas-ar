@@ -46,12 +46,18 @@ camera.script.create("arCamera", {
 app.root.addChild(camera);
 ```
 
+| Attribute | Type | Description |
+| --- | --- | --- |
+| cameraCalibration | [pc.Asset](https://developer.playcanvas.com/en/api/pc.Asset.html) | Data file containing the calibration properties for the camera to be used. |
+| thresholdMode | Number | The thresholding mode to use. The standard ARToolKit options are available: Manual (0), Median (1), Otsu (2), Adaptive (3). |
+| threshold | Number | The binarization threshold is an 8-bit number that is in the range [0, 255], inclusive. The default value is 100, allowing ARToolKit to easily find markers in images that have good contrast. This value is only used when the mode is set to Manual. |
+| videoTexture | Boolean | Streams the camera feed to a video texture if enabled. Otherwise, a video DOM element is used. |
+
 ### arMarker
 
 This code creates an AR marker entity:
 
 ```javascript
-// Create the marker entity
 var hiro = new pc.Entity("Hiro Marker");
 hiro.addComponent("script");
 hiro.script.create("arMarker", {
@@ -65,6 +71,14 @@ hiro.script.create("arMarker", {
 });
 app.root.addChild(hiro);
 ```
+
+| Attribute | Type | Description |
+| --- | --- | --- |
+| pattern | [pc.Asset](https://developer.playcanvas.com/en/api/pc.Asset.html) | The marker pattern to track. This can be the Hiro or Kanji markers or a marker you have generated yourself. |
+| width | Number | The width of the marker. |
+| deactivationTime | Number | The time in seconds from when a marker is lost before its children are deactivated. |
+| shadow | Boolean | Enable this option to generate shadows in the plane of the marker that blend with the camera feed. |
+| shadowStrength | Number | Control the strength of the shadow. 1 is full strength and 0 is disabled. |
 
 ## Supported Operating Systems and Browsers
 * Android 4.0+ (Chrome 21+)
