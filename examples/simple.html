@@ -66,7 +66,7 @@
                     box.setLocalPosition(0, 0.5, 0);
                     hiro.addChild(box);
 
-                    // Create an Entity with a point light component and a sphere model component.
+                    // Create a directional light
                     var light = new pc.Entity();
                     light.addComponent("light", {
                         type: "directional",
