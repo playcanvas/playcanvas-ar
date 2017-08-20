@@ -1,4 +1,4 @@
-# PlayCanvasAR - Easy AR for the Web
+# PlayCanvasAR - Fast and Easy AR for the Web
 PlayCanvasAR makes it *easy* to build *lightning fast* augmented reality applications. With it, you can construct web-based AR applications with *zero programming* using the PlayCanvas Editor. Just drag in your 3D models and watch them appear in AR!
 
 ![PlayCanvas Editor](/images/editor.png?raw=true)
