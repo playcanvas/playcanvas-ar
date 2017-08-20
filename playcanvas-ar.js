@@ -217,6 +217,14 @@ ArCamera.prototype.onResize = function () {
         // Use AR Toolkit's Y FOV directly
         this.entity.camera.fov = Math.abs(fovy);
     }
+
+    if (vw < vh) {
+        this.entity.setEulerAngles(0, 180, 270);
+        this.arController.orientation = 'portrait';
+    } else {
+        this.entity.setEulerAngles(0, 180, 180);
+        this.arController.orientation = 'landscape';
+    }
 };
 
 ArCamera.prototype.startVideo = function () {
@@ -239,7 +247,7 @@ ArCamera.prototype.startTracking = function (w, h) {
     // Load the camera calibration data
     var url = this.cameraCalibration.getFileUrl();
     this.cameraParam = new ARCameraParam(url, function () {
-        // Create a new AR controller
+        // Create a new AR controller, ensuring width is always greather than height
         this.arController = new ARController(w, h, this.cameraParam);
         this.arController.setProjectionNearPlane(this.entity.camera.nearClip);
         this.arController.setProjectionFarPlane(this.entity.camera.farClip);
@@ -388,7 +396,7 @@ ArMarker.attributes.add('shadow', {
 });
 ArMarker.attributes.add('shadowStrength', {
     type: 'number',
-    default: 1,
+    default: 0.5,
     min: 0,
     max: 1,
     title: 'Shadow Strength',
