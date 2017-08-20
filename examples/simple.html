@@ -44,10 +44,9 @@
                     app.root.addChild(camera);
                 });
 
-                // Create a marker using the Hiro pattern and attach a cube to it
+                // Load the Hiro marker pattern and create a marker entity with it
                 app.assets.loadFromUrl("../artoolkit/patterns/patt.hiro", "binary", function (err, asset) {
 
-                    // Creat the marker entity
                     var hiro = new pc.Entity("Hiro Marker");
                     hiro.addComponent("script");
                     hiro.script.create("arMarker", {

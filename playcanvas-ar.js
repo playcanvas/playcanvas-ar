@@ -5,6 +5,7 @@ var ArCamera = pc.createScript('arCamera');
 
 ArCamera.attributes.add('cameraCalibration', { 
     type: 'asset',
+    assetType: 'binary',
     title: 'Calibration File',
     description: 'Data file containing the calibration properties for the camera to be used'
 });
@@ -363,6 +364,7 @@ var ArMarker = pc.createScript('arMarker');
 
 ArMarker.attributes.add('pattern', {
     type: 'asset',
+    assetType: 'binary',
     title: 'Pattern',
     description: 'The marker pattern to track. This can be the Hiro or Kanji markers or a marker you have generated yourself.'
 });
