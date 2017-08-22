@@ -241,7 +241,7 @@ ArCamera.prototype.startVideo = function () {
 
 ArCamera.prototype.startTracking = function (w, h) {
     if (!this.cameraCalibration) {
-        console.error('ERROR: No camera calibration file set on your arCamera script.');
+        console.error('ERROR: No camera calibration file set on your arCamera script. Try assigning camera_para.dat.');
     }
 
     // Load the camera calibration data
@@ -265,9 +265,9 @@ ArCamera.prototype.startTracking = function (w, h) {
 ArCamera.prototype.initialize = function () {
     var self = this;
 
-    // Flip the camera to match ARToolkit's coordinate system,
-    // ignoring whatever is set up in the Editor
-    this.entity.setEulerAngles(0, 180, 180);
+    // All markers move with respect to an untransformed camera
+    // so ignore whatever transformation has been set up in the Editor
+    this.entity.setEulerAngles(0, 0, 0);
     this.entity.setPosition(0, 0, 0);
     this.entity.setLocalScale(1, 1, 1);
 
@@ -404,6 +404,7 @@ ArMarker.attributes.add('shadowStrength', {
 });
 
 ArMarker.shadowMaterial = null;
+ArMarker.mask = 1;
 
 ArMarker.prototype.hideChildren = function () {
     for (var i = 0; i < this.entity.children.length; i++) {
@@ -453,6 +454,25 @@ ArMarker.prototype.destroyShadow = function () {
     }
 };
 
+ArMarker.prototype.setMask = function (entity) {
+    var i;
+
+    if (entity.model) {
+        var meshInstances = entity.model.meshInstances;
+        for (i = 0; i < meshInstances.length; i++) {
+            meshInstances[i].mask = ArMarker.mask;
+        }
+    }
+    
+    if (entity.light) {
+        entity.light.mask = ArMarker.mask;
+    }
+
+    for (i = 0; i < entity.children.length; i++) {
+        this.setMask(entity.children[i]);
+    }
+};
+
 // initialize code called once per entity
 ArMarker.prototype.initialize = function () {
     var self = this;
@@ -461,6 +481,11 @@ ArMarker.prototype.initialize = function () {
     this.active = false;
     this.markerId = -1;
     this.markerMatrix = new pc.Mat4();
+    this.cameraRot = new pc.Mat4();
+    this.cameraRot.setFromEulerAngles(180, 0, 0);
+    this.cameraRot.invert();
+    this.finalMatrix = new pc.Mat4();
+    
     this.lastSeen = -1;
 
     this.app.on('trackinginitialized', function (arController) {
@@ -471,11 +496,15 @@ ArMarker.prototype.initialize = function () {
             if (ev.data.type === artoolkit.PATTERN_MARKER && ev.data.marker.idPatt === self.markerId) {
                 // Set the marker entity position and rotation from ARToolkit
                 self.markerMatrix.data.set(ev.data.matrix);
-                entity.setPosition(self.markerMatrix.getTranslation());
-                entity.setEulerAngles(self.markerMatrix.getEulerAngles());
+                self.finalMatrix.mul2(self.markerMatrix, self.cameraRot);
+                entity.setPosition(self.finalMatrix.getTranslation());
+                entity.setEulerAngles(self.finalMatrix.getEulerAngles());
+
+                if (self.width > 0)
+                    entity.setLocalScale(1 / self.width, 1 / self.width, 1 / self.width);
 
                 // Z points upwards from an ARToolkit marker so rotate it so Y is up
-                entity.rotateLocal(90, 0, 0);
+                entity.rotateLocal(-90, 0, 0);
 
                 self.lastSeen = Date.now();
                 if (!self.active) {
@@ -489,6 +518,10 @@ ArMarker.prototype.initialize = function () {
     if (this.shadow) {
         this.createShadow();
     }
+
+    // Associate all lights and models below this specific marker
+    this.setMask(this.entity);
+    ArMarker.mask = ArMarker.mask << 1;
 
     this.on('attr:shadow', function (value, prev) {
         if (value)
