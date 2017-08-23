@@ -219,10 +219,10 @@ ArCamera.prototype.onResize = function () {
     }
 
     if (vw < vh) {
-        this.entity.setEulerAngles(0, 180, 270);
+        this.entity.setEulerAngles(0, 0, 90);
         this.arController.orientation = 'portrait';
     } else {
-        this.entity.setEulerAngles(0, 180, 180);
+        this.entity.setEulerAngles(0, 0, 0);
         this.arController.orientation = 'landscape';
     }
 };
@@ -240,10 +240,6 @@ ArCamera.prototype.startVideo = function () {
 };
 
 ArCamera.prototype.startTracking = function (w, h) {
-    if (!this.cameraCalibration) {
-        console.error('ERROR: No camera calibration file set on your arCamera script. Try assigning camera_para.dat.');
-    }
-
     // Load the camera calibration data
     var url = this.cameraCalibration.getFileUrl();
     this.cameraParam = new ARCameraParam(url, function () {
@@ -252,7 +248,13 @@ ArCamera.prototype.startTracking = function (w, h) {
         this.arController.setProjectionNearPlane(this.entity.camera.nearClip);
         this.arController.setProjectionFarPlane(this.entity.camera.farClip);
         this.arController.setThreshold(Math.floor(this.threshold));
-        this.arController.setThresholdMode(this.thresholdModes[this.thresholdMode]);
+        switch (this.thresholdMode) {
+            default:
+            case 0: this.arController.setThresholdMode(artoolkit.AR_LABELING_THRESH_MODE_MANUAL); break;
+            case 1: this.arController.setThresholdMode(artoolkit.AR_LABELING_THRESH_MODE_AUTO_MEDIAN); break;
+            case 2: this.arController.setThresholdMode(artoolkit.AR_LABELING_THRESH_MODE_AUTO_OTSU); break;
+            case 3: this.arController.setThresholdMode(artoolkit.AR_LABELING_THRESH_MODE_AUTO_ADAPTIVE); break;
+        }
 
         this.onResize();
 
@@ -261,33 +263,16 @@ ArCamera.prototype.startTracking = function (w, h) {
     }.bind(this));
 };
 
-// initialize code called once per entity
-ArCamera.prototype.initialize = function () {
+ArCamera.prototype.supportsAr = function () {
+    return (navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+};
+
+ArCamera.prototype.enterAr = function (success, error) {
+    if (!this.cameraCalibration) {
+        console.error('ERROR: No camera calibration file set on your arCamera script. Try assigning camera_para.dat.');
+    }
+
     var self = this;
-
-    // All markers move with respect to an untransformed camera
-    // so ignore whatever transformation has been set up in the Editor
-    this.entity.setEulerAngles(0, 0, 0);
-    this.entity.setPosition(0, 0, 0);
-    this.entity.setLocalScale(1, 1, 1);
-
-    // Create the video element to receive the camera stream
-    var video = document.createElement('video');
-    video.setAttribute('autoplay', '');
-    video.setAttribute('muted', '');
-    video.setAttribute('playsinline', ''); // This is critical for iOS or the video initially goes fullscreen
-
-    // Check for both video and canvas resizing
-    // Changing screen orientation on mobile can change both!
-    video.addEventListener('resize', function () {
-        self.onResize();
-    });
-    this.app.graphicsDevice.on('resizecanvas', function () {
-        self.onResize();
-    });
-    
-    this.video = video;
-    this.videoPlaying = false;
 
     var constraints = {
         audio: false,
@@ -298,7 +283,24 @@ ArCamera.prototype.initialize = function () {
     };
 
     navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
+        self.videoPlaying = false;
+
+        // Create the video element to receive the camera stream
+        var video = document.createElement('video');
+        video.setAttribute('autoplay', '');
+        video.setAttribute('muted', '');
+        video.setAttribute('playsinline', ''); // This is critical for iOS or the video initially goes fullscreen
         video.srcObject = stream;
+        self.video = video;
+
+        // Check for both video and canvas resizing
+        // Changing screen orientation on mobile can change both!
+        video.addEventListener('resize', function () {
+            self.onResize();
+        });
+        self.app.graphicsDevice.on('resizecanvas', function () {
+            self.onResize();
+        });
 
         if (pc.platform.mobile) {
             // iOS needs a user action to start the video
@@ -308,6 +310,7 @@ ArCamera.prototype.initialize = function () {
                     self.startVideo();
                     self.startTracking(self.video.videoWidth, self.video.videoHeight);
                     self.videoPlaying = true;
+                    if (success) success();
                 }
             }, true);
         } else {
@@ -317,26 +320,47 @@ ArCamera.prototype.initialize = function () {
                     self.startVideo();
                     self.startTracking(self.video.videoWidth, self.video.videoHeight);
                     self.videoPlaying = true;
+                    if (success) success();
                 }
             });
         }
     }).catch(function (e) {
-        console.error("ERROR: Unable to acquire camera stream", e);
+        if (error) error("ERROR: Unable to acquire camera stream");
     });
+};
 
-    // Handle attribute changes from Editor
-    this.thresholdModes = [
-        artoolkit.AR_LABELING_THRESH_MODE_MANUAL,
-        artoolkit.AR_LABELING_THRESH_MODE_AUTO_MEDIAN,
-        artoolkit.AR_LABELING_THRESH_MODE_AUTO_OTSU,
-        artoolkit.AR_LABELING_THRESH_MODE_AUTO_ADAPTIVE
-    ];    
+ArCamera.prototype.exitAr = function () {
+    // Tear down tracking resources
+    if (this.arController) {
+        this.arController.dispose();
+        this.arController = null;
+    }
+    
+    if (this.cameraParam) {
+        this.cameraParam.dispose();
+        this.cameraParam = null;
+    }
 
-    this.on('attr:videoTexture', function (value, prev) {
-        if (value) {
-            this.useVideoTexture();
-        } else {
-            this.useDom();
+    // Tear down video resources
+    if (this.video) {
+        this.video.stop();
+        if (this.video.parentElement) {
+            document.body.removeChild(this.video);
+        }
+    }
+};
+
+// initialize code called once per entity
+ArCamera.prototype.initialize = function () {
+    if (this.cameraCalibration) {
+        this.enterAr();
+    } else {
+        console.warn("WARNING: Unable to enter AR until a valid camera calibration asset has been set.");
+    }
+
+    this.on('attr:cameraCalibration', function (value, prev) {
+        if (!this.arController && value) {
+            this.enterAr();
         }
     });
 
@@ -346,13 +370,34 @@ ArCamera.prototype.initialize = function () {
     });
 
     this.on('attr:thresholdMode', function (value, prev) {
-        if (this.arController)
-            this.arController.setThresholdMode(this.thresholdModes[value]);
+        if (this.arController) {
+            switch (value) {
+                default:
+                case 0: this.arController.setThresholdMode(artoolkit.AR_LABELING_THRESH_MODE_MANUAL); break;
+                case 1: this.arController.setThresholdMode(artoolkit.AR_LABELING_THRESH_MODE_AUTO_MEDIAN); break;
+                case 2: this.arController.setThresholdMode(artoolkit.AR_LABELING_THRESH_MODE_AUTO_OTSU); break;
+                case 3: this.arController.setThresholdMode(artoolkit.AR_LABELING_THRESH_MODE_AUTO_ADAPTIVE); break;
+            }
+        }
+    });
+
+    this.on('attr:videoTexture', function (value, prev) {
+        if (value) {
+            this.useVideoTexture();
+        } else {
+            this.useDom();
+        }
     });
 };
 
 // update code called every frame
 ArCamera.prototype.update = function(dt) {
+    // All markers move with respect to an untransformed camera
+    // so ignore whatever transformation has been set up in the Editor
+    this.entity.setEulerAngles(0, 0, 0);
+    this.entity.setPosition(0, 0, 0);
+    this.entity.setLocalScale(1, 1, 1);
+
     if (this.arController) {
         // Update the tracking
         this.arController.process(this.video);
@@ -396,7 +441,7 @@ ArMarker.attributes.add('shadow', {
 });
 ArMarker.attributes.add('shadowStrength', {
     type: 'number',
-    default: 0.5,
+    default: 1,
     min: 0,
     max: 1,
     title: 'Shadow Strength',
@@ -404,7 +449,6 @@ ArMarker.attributes.add('shadowStrength', {
 });
 
 ArMarker.shadowMaterial = null;
-ArMarker.mask = 1;
 
 ArMarker.prototype.hideChildren = function () {
     for (var i = 0; i < this.entity.children.length; i++) {
@@ -454,25 +498,6 @@ ArMarker.prototype.destroyShadow = function () {
     }
 };
 
-ArMarker.prototype.setMask = function (entity) {
-    var i;
-
-    if (entity.model) {
-        var meshInstances = entity.model.meshInstances;
-        for (i = 0; i < meshInstances.length; i++) {
-            meshInstances[i].mask = ArMarker.mask;
-        }
-    }
-    
-    if (entity.light) {
-        entity.light.mask = ArMarker.mask;
-    }
-
-    for (i = 0; i < entity.children.length; i++) {
-        this.setMask(entity.children[i]);
-    }
-};
-
 // initialize code called once per entity
 ArMarker.prototype.initialize = function () {
     var self = this;
@@ -485,7 +510,7 @@ ArMarker.prototype.initialize = function () {
     this.cameraRot.setFromEulerAngles(180, 0, 0);
     this.cameraRot.invert();
     this.finalMatrix = new pc.Mat4();
-    
+
     this.lastSeen = -1;
 
     this.app.on('trackinginitialized', function (arController) {
@@ -496,7 +521,7 @@ ArMarker.prototype.initialize = function () {
             if (ev.data.type === artoolkit.PATTERN_MARKER && ev.data.marker.idPatt === self.markerId) {
                 // Set the marker entity position and rotation from ARToolkit
                 self.markerMatrix.data.set(ev.data.matrix);
-                self.finalMatrix.mul2(self.markerMatrix, self.cameraRot);
+                self.finalMatrix.mul2(self.cameraRot, self.markerMatrix);
                 entity.setPosition(self.finalMatrix.getTranslation());
                 entity.setEulerAngles(self.finalMatrix.getEulerAngles());
 
@@ -504,7 +529,7 @@ ArMarker.prototype.initialize = function () {
                     entity.setLocalScale(1 / self.width, 1 / self.width, 1 / self.width);
 
                 // Z points upwards from an ARToolkit marker so rotate it so Y is up
-                entity.rotateLocal(-90, 0, 0);
+                entity.rotateLocal(90, 0, 0);
 
                 self.lastSeen = Date.now();
                 if (!self.active) {
@@ -518,10 +543,6 @@ ArMarker.prototype.initialize = function () {
     if (this.shadow) {
         this.createShadow();
     }
-
-    // Associate all lights and models below this specific marker
-    this.setMask(this.entity);
-    ArMarker.mask = ArMarker.mask << 1;
 
     this.on('attr:shadow', function (value, prev) {
         if (value)
