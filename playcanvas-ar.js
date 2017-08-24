@@ -38,7 +38,8 @@ ArCamera.attributes.add('thresholdMode', {
         { 'Manual': 0 },
         { 'Median': 1 },
         { 'Otsu': 2 },
-        { 'Adaptive': 3 }
+        { 'Adaptive': 3 },
+        { 'Bracketing': 4 }
     ],
     default: 0,
     title: 'Threshold Mode',
@@ -323,6 +324,9 @@ ArCamera.prototype._setThresholdMode = function (thresholdMode) {
                 break;
             case 3:
                 this.arController.setThresholdMode(artoolkit.AR_LABELING_THRESH_MODE_AUTO_ADAPTIVE);
+                break;
+            case 4:
+                this.arController.setThresholdMode(artoolkit.AR_LABELING_THRESH_MODE_AUTO_BRACKETING);
                 break;
             default:
                 console.error("ERROR: " + thresholdMode + " is an invalid threshold mode.");
