@@ -36,10 +36,10 @@ ArCamera.attributes.add('thresholdMode', {
     type: 'number', 
     enum: [
         { 'Manual': 0 },
-        { 'Median': 1 },
-        { 'Otsu': 2 },
-        { 'Adaptive': 3 },
-        { 'Bracketing': 4 }
+        { 'Auto Median': 1 },
+        { 'Auto Otsu': 2 },
+        { 'Auto Adaptive': 3 },
+        { 'Auto Bracketing': 4 }
     ],
     default: 0,
     title: 'Threshold Mode',
