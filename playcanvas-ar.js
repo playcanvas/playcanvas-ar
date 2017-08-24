@@ -95,9 +95,13 @@ ArCamera.prototype.useDom = function () {
     style.backgroundSize = 'cover';
     style.overflow = 'hidden';
     style.transform = 'translate(-50%, -50%)';
-
+    style.zIndex = '0';
     document.body.appendChild(this.video);
 
+    // Z-order for page is:
+    //   0: Video DOM element
+    //   1: PlayCanvas canvas element
+    //   2: ARToolkit debug canvas
     this.app.graphicsDevice.canvas.style.zIndex = '1';
 };
 
@@ -284,7 +288,7 @@ ArCamera.prototype._setDebugMode = function (mode) {
         var canvas = this.arController.canvas;
         if (mode) {
             canvas.style.position = 'absolute';
-            canvas.style.zIndex = '1';
+            canvas.style.zIndex = '2';
             document.body.appendChild(canvas);
 
             this.arController._bwpointer = this.arController.getProcessingImage();
