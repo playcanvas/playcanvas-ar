@@ -202,7 +202,7 @@ ArCamera.prototype.useVideoTexture = function () {
         count: 4,
         indexed: false
     };
-    
+
     var material = new pc.Material();
     material.shader = shader;
     material.depthTest = false;
@@ -392,6 +392,11 @@ ArCamera.prototype._createArController = function (w, h, url) {
     // Load the camera calibration data
     this.cameraParam = new ARCameraParam(url, function () {
         this.arController = new ARController(w, h, this.cameraParam);
+
+        // Disable spammy console logging from ARToolkit. See the following for the origin of 4:
+        // https://github.com/artoolkit/artoolkit5/blob/master/include/AR/config.h.in#L214
+        this.arController.setLogLevel(4);
+
         this.arController.setProjectionNearPlane(this.entity.camera.nearClip);
         this.arController.setProjectionFarPlane(this.entity.camera.farClip);
         this._setImageProcMode(this.processingMode);
