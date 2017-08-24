@@ -9,6 +9,19 @@ ArCamera.attributes.add('cameraCalibration', {
     title: 'Calibration File',
     description: 'Data file containing the calibration properties for the camera to be used'
 });
+ArCamera.attributes.add('detectionMode', { 
+    type: 'number', 
+    enum: [
+        { 'Color Template': 0 },
+        { 'Mono Template': 1 },
+        { 'Matrix': 2 },
+        { 'Color Template and Matrix': 3 },
+        { 'Mono Template and Matrix': 4 }
+    ],
+    default: 0,
+    title: 'Detection Mode',
+    description: 'The pattern detection determines the method by which ARToolKit matches detected squares in the video image to marker templates and/or IDs. ARToolKit can match against pictorial "template" markers, whose pattern files are created with the mk_patt utility, in either colour or mono, and additionally can match against 2D-barcode-type "matrix" markers, which have an embedded marker ID. Two different two-pass modes are also available, in which a matrix-detection pass is made first, followed by a template-matching pass.'
+});
 ArCamera.attributes.add('thresholdMode', { 
     type: 'number', 
     enum: [
@@ -219,10 +232,8 @@ ArCamera.prototype.onResize = function () {
     }
 
     if (vw < vh) {
-        this.entity.setEulerAngles(0, 0, 90);
         this.arController.orientation = 'portrait';
     } else {
-        this.entity.setEulerAngles(0, 0, 0);
         this.arController.orientation = 'landscape';
     }
 };
@@ -239,28 +250,94 @@ ArCamera.prototype.startVideo = function () {
     }
 };
 
-ArCamera.prototype.startTracking = function (w, h) {
+ArCamera.prototype._setPatternDetectionMode = function (detectionMode) {
+    if (this.arController) {
+        switch (detectionMode) {
+            case 0:
+                this.arController.setPatternDetectionMode(artoolkit.AR_TEMPLATE_MATCHING_COLOR);
+                break;
+            case 1:
+                this.arController.setPatternDetectionMode(artoolkit.AR_TEMPLATE_MATCHING_MONO);
+                break;
+            case 2:
+                this.arController.setPatternDetectionMode(artoolkit.AR_MATRIX_CODE_DETECTION);
+                break;
+            case 3:
+                this.arController.setPatternDetectionMode(artoolkit.AR_TEMPLATE_MATCHING_COLOR_AND_MATRIX);
+                break;
+            case 4:
+                this.arController.setPatternDetectionMode(artoolkit.AR_TEMPLATE_MATCHING_MONO_AND_MATRIX);
+                break;
+            default:
+                console.error("ERROR: " + detectionMode + " is an invalid pattern detection mode.");
+                break;
+        }
+    }
+};
+
+ArCamera.prototype._setThreshold = function (theshold) {
+    if (this.arController) {
+        // Clamp to 0..255 and round down to nearest integer
+        value = Math.floor(Math.min(Math.max(theshold, 0), 255));
+        this.arController.setThreshold(theshold);
+    }
+};
+
+ArCamera.prototype._setThresholdMode = function (thresholdMode) {
+    if (this.arController) {
+        switch (thresholdMode) {
+            case 0:
+                this.arController.setThresholdMode(artoolkit.AR_LABELING_THRESH_MODE_MANUAL);
+                break;
+            case 1:
+                this.arController.setThresholdMode(artoolkit.AR_LABELING_THRESH_MODE_AUTO_MEDIAN);
+                break;
+            case 2:
+                this.arController.setThresholdMode(artoolkit.AR_LABELING_THRESH_MODE_AUTO_OTSU);
+                break;
+            case 3:
+                this.arController.setThresholdMode(artoolkit.AR_LABELING_THRESH_MODE_AUTO_ADAPTIVE);
+                break;
+            default:
+                console.error("ERROR: " + thresholdMode + " is an invalid threshold mode.");
+                break;
+        }
+    }
+};
+
+ArCamera.prototype._createArController = function (w, h, url) {
     // Load the camera calibration data
-    var url = this.cameraCalibration.getFileUrl();
     this.cameraParam = new ARCameraParam(url, function () {
-        // Create a new AR controller, ensuring width is always greather than height
         this.arController = new ARController(w, h, this.cameraParam);
         this.arController.setProjectionNearPlane(this.entity.camera.nearClip);
         this.arController.setProjectionFarPlane(this.entity.camera.farClip);
-        this.arController.setThreshold(Math.floor(this.threshold));
-        switch (this.thresholdMode) {
-            default:
-            case 0: this.arController.setThresholdMode(artoolkit.AR_LABELING_THRESH_MODE_MANUAL); break;
-            case 1: this.arController.setThresholdMode(artoolkit.AR_LABELING_THRESH_MODE_AUTO_MEDIAN); break;
-            case 2: this.arController.setThresholdMode(artoolkit.AR_LABELING_THRESH_MODE_AUTO_OTSU); break;
-            case 3: this.arController.setThresholdMode(artoolkit.AR_LABELING_THRESH_MODE_AUTO_ADAPTIVE); break;
-        }
+        this._setPatternDetectionMode(this.detectionMode);
+        this._setThresholdMode(this.thresholdMode);
+        this._setThreshold(this.threshold);
 
         this.onResize();
 
         // Notify all markers that tracking is initialized
         this.app.fire('trackinginitialized', this.arController);
     }.bind(this));
+};
+
+ArCamera.prototype._destroyArController = function () {
+    // Tear down tracking resources
+    if (this.arController) {
+        this.arController.dispose();
+        this.arController = null;
+    }
+    
+    if (this.cameraParam) {
+        this.cameraParam.dispose();
+        this.cameraParam = null;
+    }
+};
+
+ArCamera.prototype.startTracking = function (w, h) {
+    var url = this.cameraCalibration.getFileUrl();
+    this._createArController(w, h, url);
 };
 
 ArCamera.prototype.supportsAr = function () {
@@ -295,30 +372,30 @@ ArCamera.prototype.enterAr = function (success, error) {
 
         // Check for both video and canvas resizing
         // Changing screen orientation on mobile can change both!
-        video.addEventListener('resize', function () {
-            self.onResize();
-        });
         self.app.graphicsDevice.on('resizecanvas', function () {
             self.onResize();
         });
+        video.addEventListener('resize', function () {
+            self.onResize();
+        });
 
+        // Only play the video when it's actually ready
+        video.addEventListener('canplay', function () {
+            if (!self.videoPlaying) {
+                self.startVideo();
+                self.startTracking(video.videoWidth, video.videoHeight);
+                self.videoPlaying = true;
+                if (success) success();
+            }
+        });
+        
+        // iOS needs a user action to start the video
         if (pc.platform.mobile) {
-            // iOS needs a user action to start the video
             window.addEventListener('touchstart', function (e) {
                 e.preventDefault();
                 if (!self.videoPlaying) {
                     self.startVideo();
-                    self.startTracking(self.video.videoWidth, self.video.videoHeight);
-                    self.videoPlaying = true;
-                    if (success) success();
-                }
-            }, true);
-        } else {
-            // Only play the video when it's actually ready
-            video.addEventListener('canplay', function () {
-                if (!self.videoPlaying) {
-                    self.startVideo();
-                    self.startTracking(self.video.videoWidth, self.video.videoHeight);
+                    self.startTracking(video.videoWidth, video.videoHeight);
                     self.videoPlaying = true;
                     if (success) success();
                 }
@@ -330,17 +407,6 @@ ArCamera.prototype.enterAr = function (success, error) {
 };
 
 ArCamera.prototype.exitAr = function () {
-    // Tear down tracking resources
-    if (this.arController) {
-        this.arController.dispose();
-        this.arController = null;
-    }
-    
-    if (this.cameraParam) {
-        this.cameraParam.dispose();
-        this.cameraParam = null;
-    }
-
     // Tear down video resources
     if (this.video) {
         this.video.stop();
@@ -353,32 +419,34 @@ ArCamera.prototype.exitAr = function () {
 // initialize code called once per entity
 ArCamera.prototype.initialize = function () {
     if (this.cameraCalibration) {
-        this.enterAr();
+        if (this.supportsAr()) {
+            this.enterAr();
+        }
     } else {
         console.warn("WARNING: Unable to enter AR until a valid camera calibration asset has been set.");
     }
 
+    //////////////////////////////
+    // Handle attribute changes //
+    //////////////////////////////
     this.on('attr:cameraCalibration', function (value, prev) {
         if (!this.arController && value) {
-            this.enterAr();
+            if (this.supportsAr()) {
+                this.enterAr();
+            }
         }
+    });
+
+    this.on('attr:detectionMode', function (value, prev) {
+        this._setPatternDetectionMode(value);
     });
 
     this.on('attr:threshold', function (value, prev) {
-        if (this.arController)
-            this.arController.setThreshold(Math.floor(value));
+        this._setThreshold(value);
     });
 
     this.on('attr:thresholdMode', function (value, prev) {
-        if (this.arController) {
-            switch (value) {
-                default:
-                case 0: this.arController.setThresholdMode(artoolkit.AR_LABELING_THRESH_MODE_MANUAL); break;
-                case 1: this.arController.setThresholdMode(artoolkit.AR_LABELING_THRESH_MODE_AUTO_MEDIAN); break;
-                case 2: this.arController.setThresholdMode(artoolkit.AR_LABELING_THRESH_MODE_AUTO_OTSU); break;
-                case 3: this.arController.setThresholdMode(artoolkit.AR_LABELING_THRESH_MODE_AUTO_ADAPTIVE); break;
-            }
-        }
+        this._setThresholdMode(value);
     });
 
     this.on('attr:videoTexture', function (value, prev) {
@@ -506,9 +574,12 @@ ArMarker.prototype.initialize = function () {
     this.active = false;
     this.markerId = -1;
     this.markerMatrix = new pc.Mat4();
-    this.cameraRot = new pc.Mat4();
-    this.cameraRot.setFromEulerAngles(180, 0, 0);
-    this.cameraRot.invert();
+    this.portraitRot = new pc.Mat4();
+    this.portraitRot.setFromEulerAngles(180, 0, 90);
+    this.portraitRot.invert();
+    this.landscapeRot = new pc.Mat4();
+    this.landscapeRot.setFromEulerAngles(180, 0, 0);
+    this.landscapeRot.invert();
     this.finalMatrix = new pc.Mat4();
 
     this.lastSeen = -1;
@@ -519,9 +590,13 @@ ArMarker.prototype.initialize = function () {
         });
         arController.addEventListener('getMarker', function (ev) {
             if (ev.data.type === artoolkit.PATTERN_MARKER && ev.data.marker.idPatt === self.markerId) {
-                // Set the marker entity position and rotation from ARToolkit
+                // Set the marker entity position and rotat ion from ARToolkit
                 self.markerMatrix.data.set(ev.data.matrix);
-                self.finalMatrix.mul2(self.cameraRot, self.markerMatrix);
+                if (arController.orientation === 'portrait') {
+                    self.finalMatrix.mul2(self.portraitRot, self.markerMatrix);
+                } else {
+                    self.finalMatrix.mul2(self.landscapeRot, self.markerMatrix);
+                }
                 entity.setPosition(self.finalMatrix.getTranslation());
                 entity.setEulerAngles(self.finalMatrix.getEulerAngles());
 
@@ -544,6 +619,9 @@ ArMarker.prototype.initialize = function () {
         this.createShadow();
     }
 
+    //////////////////////////////
+    // Handle attribute changes //
+    //////////////////////////////
     this.on('attr:shadow', function (value, prev) {
         if (value)
             this.createShadow();
