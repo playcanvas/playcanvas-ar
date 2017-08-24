@@ -60,6 +60,12 @@ ArCamera.attributes.add('videoTexture', {
     title: 'Video Texture',
     description: 'Streams the camera feed to a video texture if enabled. Otherwise, a video DOM element is used.'
 });
+ArCamera.attributes.add('debug', {
+    type: 'boolean',
+    default: false,
+    title: 'Debug Mode',
+    description: 'Enables or disables debug mode in the tracker. When enabled, a black and white debug image is generated during marker detection. The debug image is useful for visualizing the binarization process and choosing a threshold value.'
+});
 
 ArCamera.prototype.useDom = function () {
     if  (this.entity.model) {
@@ -261,6 +267,25 @@ ArCamera.prototype.startVideo = function () {
     }
 };
 
+ArCamera.prototype._setDebugMode = function (mode) {
+    if (this.arController) {
+        this.arController.setDebugMode(mode);
+
+        var canvas = this.arController.canvas;
+        if (mode) {
+            canvas.style.position = 'absolute';
+            canvas.style.zIndex = '1';
+            document.body.appendChild(canvas);
+
+            this.arController._bwpointer = this.arController.getProcessingImage();
+        } else {
+            document.body.removeChild(canvas);
+
+            this.arController._bwpointer = null;
+        }
+    }
+};
+
 ArCamera.prototype._setImageProcMode = function (procMode) {
     if (this.arController) {
         switch (procMode) {
@@ -345,6 +370,7 @@ ArCamera.prototype._createArController = function (w, h, url) {
         this._setPatternDetectionMode(this.detectionMode);
         this._setThresholdMode(this.thresholdMode);
         this._setThreshold(this.threshold);
+        this._setDebugMode(this.debug);
 
         this.onResize();
 
@@ -490,6 +516,10 @@ ArCamera.prototype.initialize = function () {
         } else {
             this.useDom();
         }
+    });
+
+    this.on('attr:debug', function (value, prev) {
+        this._setDebugMode(value);
     });
 };
 
