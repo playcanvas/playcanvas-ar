@@ -279,7 +279,9 @@ ArCamera.prototype._setDebugMode = function (mode) {
 
             this.arController._bwpointer = this.arController.getProcessingImage();
         } else {
-            document.body.removeChild(canvas);
+            if (canvas.parentElement) {
+                document.body.removeChild(canvas);
+            }
 
             this.arController._bwpointer = null;
         }
