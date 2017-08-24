@@ -22,6 +22,16 @@ ArCamera.attributes.add('detectionMode', {
     title: 'Detection Mode',
     description: 'The pattern detection determines the method by which ARToolKit matches detected squares in the video image to marker templates and/or IDs. ARToolKit can match against pictorial "template" markers, whose pattern files are created with the mk_patt utility, in either colour or mono, and additionally can match against 2D-barcode-type "matrix" markers, which have an embedded marker ID. Two different two-pass modes are also available, in which a matrix-detection pass is made first, followed by a template-matching pass.'
 });
+ArCamera.attributes.add('labelingMode', { 
+    type: 'number',
+    enum: [
+        { 'White Region': 0 },
+        { 'Black Region': 1 }
+    ],
+    default: 1,
+    title: 'Labeling Mode',
+    description: "Select between detection of black markers and white markers.\n\nARToolKit's labelling algorithm can work with both black-bordered markers on a white background ('Black Region') or white-bordered markers on a black background ('White Region'). This property allows you to specify the type of markers to look for. Note that this does not affect the pattern-detection algorithm which works on the interior of the marker."
+});
 ArCamera.attributes.add('processingMode', { 
     type: 'number', 
     enum: [
@@ -304,6 +314,22 @@ ArCamera.prototype._setImageProcMode = function (procMode) {
     }
 };
 
+ArCamera.prototype._setLabelingMode = function (labelingMode) {
+    if (this.arController) {
+        switch (labelingMode) {
+            case 0:
+                this.arController.setLabelingMode(artoolkit.AR_LABELING_WHITE_REGION);
+                break;
+            case 1:
+                this.arController.setLabelingMode(artoolkit.AR_LABELING_BLACK_REGION);
+                break;
+            default:
+                console.error("ERROR: " + labelingMode + " is an invalid labeling mode.");
+                break;
+        }
+    }
+};
+
 ArCamera.prototype._setPatternDetectionMode = function (detectionMode) {
     if (this.arController) {
         switch (detectionMode) {
@@ -369,6 +395,7 @@ ArCamera.prototype._createArController = function (w, h, url) {
         this.arController.setProjectionNearPlane(this.entity.camera.nearClip);
         this.arController.setProjectionFarPlane(this.entity.camera.farClip);
         this._setImageProcMode(this.processingMode);
+        this._setLabelingMode(this.labelingMode);
         this._setPatternDetectionMode(this.detectionMode);
         this._setThresholdMode(this.thresholdMode);
         this._setThreshold(this.threshold);
@@ -502,6 +529,10 @@ ArCamera.prototype.initialize = function () {
 
     this.on('attr:processingMode', function (value, prev) {
         this._setImageProcMode(value);
+    });
+
+    this.on('attr:labelingMode', function (value, prev) {
+        this._setLabelingMode(value);
     });
 
     this.on('attr:threshold', function (value, prev) {
