@@ -22,6 +22,16 @@ ArCamera.attributes.add('detectionMode', {
     title: 'Detection Mode',
     description: 'The pattern detection determines the method by which ARToolKit matches detected squares in the video image to marker templates and/or IDs. ARToolKit can match against pictorial "template" markers, whose pattern files are created with the mk_patt utility, in either colour or mono, and additionally can match against 2D-barcode-type "matrix" markers, which have an embedded marker ID. Two different two-pass modes are also available, in which a matrix-detection pass is made first, followed by a template-matching pass.'
 });
+ArCamera.attributes.add('processingMode', { 
+    type: 'number', 
+    enum: [
+        { 'Frame': 0 },
+        { 'Field': 1 }
+    ],
+    default: 0,
+    title: 'Processing Mode',
+    description: "When the image processing mode is 'Frame', ARToolKit processes all pixels in each incoming image to locate markers. When the mode is 'Field', ARToolKit processes pixels in only every second pixel row and column. This is useful both for handling images from interlaced video sources (where alternate lines are assembled from alternate fields and thus have one field time-difference, resulting in a 'comb' effect) such as Digital Video cameras. The effective reduction by 75% in the pixels processed also has utility in accelerating tracking by effectively reducing the image size to one quarter size, at the cost of pose accuracy."
+});
 ArCamera.attributes.add('thresholdMode', { 
     type: 'number', 
     enum: [
@@ -250,6 +260,22 @@ ArCamera.prototype.startVideo = function () {
     }
 };
 
+ArCamera.prototype._setImageProcMode = function (procMode) {
+    if (this.arController) {
+        switch (procMode) {
+            case 0:
+                this.arController.setImageProcMode(artoolkit.AR_IMAGE_PROC_FRAME_IMAGE);
+                break;
+            case 1:
+                this.arController.setImageProcMode(artoolkit.AR_IMAGE_PROC_FIELD_IMAGE);
+                break;
+            default:
+                console.error("ERROR: " + procMode + " is an invalid image processing mode.");
+                break;
+        }
+    }
+};
+
 ArCamera.prototype._setPatternDetectionMode = function (detectionMode) {
     if (this.arController) {
         switch (detectionMode) {
@@ -278,7 +304,7 @@ ArCamera.prototype._setPatternDetectionMode = function (detectionMode) {
 ArCamera.prototype._setThreshold = function (theshold) {
     if (this.arController) {
         // Clamp to 0..255 and round down to nearest integer
-        value = Math.floor(Math.min(Math.max(theshold, 0), 255));
+        theshold = Math.floor(Math.min(Math.max(theshold, 0), 255));
         this.arController.setThreshold(theshold);
     }
 };
@@ -311,6 +337,7 @@ ArCamera.prototype._createArController = function (w, h, url) {
         this.arController = new ARController(w, h, this.cameraParam);
         this.arController.setProjectionNearPlane(this.entity.camera.nearClip);
         this.arController.setProjectionFarPlane(this.entity.camera.farClip);
+        this._setImageProcMode(this.processingMode);
         this._setPatternDetectionMode(this.detectionMode);
         this._setThresholdMode(this.thresholdMode);
         this._setThreshold(this.threshold);
@@ -328,7 +355,7 @@ ArCamera.prototype._destroyArController = function () {
         this.arController.dispose();
         this.arController = null;
     }
-    
+
     if (this.cameraParam) {
         this.cameraParam.dispose();
         this.cameraParam = null;
@@ -388,7 +415,7 @@ ArCamera.prototype.enterAr = function (success, error) {
                 if (success) success();
             }
         });
-        
+
         // iOS needs a user action to start the video
         if (pc.platform.mobile) {
             window.addEventListener('touchstart', function (e) {
@@ -439,6 +466,10 @@ ArCamera.prototype.initialize = function () {
 
     this.on('attr:detectionMode', function (value, prev) {
         this._setPatternDetectionMode(value);
+    });
+
+    this.on('attr:processingMode', function (value, prev) {
+        this._setImageProcMode(value);
     });
 
     this.on('attr:threshold', function (value, prev) {
