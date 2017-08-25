@@ -53,7 +53,7 @@ ArCamera.attributes.add('thresholdMode', {
     ],
     default: 0,
     title: 'Threshold Mode',
-    description: 'The thresholding mode to use. The standard ARToolKit options are available: Manual, Median, Otsu, Adaptive.'
+    description: 'The thresholding mode to use. The standard ARToolKit options are available: Manual, Median, Otsu, Adaptive, Bracketing.'
 });
 ArCamera.attributes.add('threshold', {
     type: 'number',
@@ -62,7 +62,7 @@ ArCamera.attributes.add('threshold', {
     precision: 0,
     default: 100,
     title: 'Threshold',
-    description: 'The binarization threshold is an 8-bit number that is in the range [0, 255], inclusive. The default value is 100, allowing ARToolKit to easily find markers in images that have good contrast. This value is only used when the mode is set to Manual.'
+    description: "Sets the labeling threshhold value. The default value is 100.\n\nThe current threshold mode is not affected by the setting of this value. Typically, this property is used when the labeling threshold mode is 'Manual'.\n\nThe threshold value is not relevant if threshold mode is 'Auto Adaptive'.\n\nBackground: The labeling threshold is the value which the AR library uses to differentiate between black and white portions of an ARToolKit marker. Since the actual brightness, contrast, and gamma of incoming images can vary signficantly between different cameras and lighting conditions, this value typically needs to be adjusted dynamically to a suitable midpoint between the observed values for black and white portions of the markers in the image."
 });
 ArCamera.attributes.add('videoTexture', {
     type: 'boolean',
