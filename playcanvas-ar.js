@@ -254,18 +254,17 @@ ArCamera.prototype.onResize = function () {
     var camMatrix = this.arController.getCameraMatrix();
     var fovy = 2 * Math.atan(1 / camMatrix[5]) * 180 / Math.PI;
 
-    if (cw / ch > vw / vh) {
-        // Video Y FOV is limited so we must limit 3D camera FOV to match
-        this.entity.camera.fov = Math.abs(fovy) * (vw / vh) / (cw / ch);
-    } else {
-        // Use AR Toolkit's Y FOV directly
-        this.entity.camera.fov = Math.abs(fovy);
-    }
-
+    this.arController.orientation = (vw < vh) ? 'portrait' : 'landscape';
     if (vw < vh) {
-        this.arController.orientation = 'portrait';
+        this.entity.camera.fov = Math.abs(fovy) * (vh / vw);
     } else {
-        this.arController.orientation = 'landscape';
+        if (cw / ch > vw / vh) {
+            // Video Y FOV is limited so we must limit 3D camera FOV to match
+            this.entity.camera.fov = Math.abs(fovy) * (vw / vh) / (cw / ch);
+        } else {
+            // Video Y FOV is limited so we must limit 3D camera FOV to match
+            this.entity.camera.fov = Math.abs(fovy);
+        }
     }
 };
 
