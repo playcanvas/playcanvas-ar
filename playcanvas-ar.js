@@ -76,6 +76,24 @@ ArCamera.attributes.add('debug', {
     title: 'Debug Mode',
     description: 'Enables or disables debug mode in the tracker. When enabled, a black and white debug image is generated during marker detection. The debug image is useful for visualizing the binarization process and choosing a threshold value.'
 });
+ArCamera.attributes.add('trackerResolution', {
+    type: 'number',
+    enum: [
+        { 'Full': 0 },
+        { 'Three Quarters': 1 },
+        { 'Half': 2 },
+        { 'Quarter': 3 }
+    ],
+    default: 0,
+    title: 'Tracker Resolution',
+    description: "Controls the resolution of the tracker image. Each video frame is copied to the tracker image for marker detection. Reducing the tracker image resolution will speed up marker detection but will also make it less precise. For example, a video camera source may have a resolution of 640x480. The tracker image will have the following resolutions based on the selected option: 'Full': 640x480, 'Three Quarters': 480x360, 'Half': 320x240, 'Quarter': 160x120"
+});
+ArCamera.attributes.add('trackAlternateFrames', {
+    type: 'boolean',
+    default: false,
+    title: 'Track Alternate Frames',
+    description: 'If selected, tracking is only performed on every other update. This can increase lag in tracking but will reduce CPU load.'
+});
 
 ArCamera.prototype.useDom = function () {
     if  (this.entity.model) {
@@ -394,7 +412,7 @@ ArCamera.prototype._setThresholdMode = function (thresholdMode) {
 ArCamera.prototype._createArController = function (w, h, url) {
     // Load the camera calibration data
     this.cameraParam = new ARCameraParam(url, function () {
-        this.arController = new ARController(w, h, this.cameraParam);
+        this.arController = new ARController(w * (1 - this.trackerResolution / 4), h * (1 - this.trackerResolution / 4), this.cameraParam);
 
         // Disable spammy console logging from ARToolkit. See the following for the origin of 4:
         // https://github.com/artoolkit/artoolkit5/blob/master/include/AR/config.h.in#L214
@@ -429,9 +447,13 @@ ArCamera.prototype._destroyArController = function () {
     }
 };
 
-ArCamera.prototype.startTracking = function (w, h) {
+ArCamera.prototype.startTracking = function () {
     var url = this.cameraCalibration.getFileUrl();
-    this._createArController(w, h, url);
+    this._createArController(this.video.videoWidth, this.video.videoHeight, url);
+};
+
+ArCamera.prototype.stopTracking = function () {
+    this._destroyArController();
 };
 
 ArCamera.prototype.supportsAr = function () {
@@ -477,7 +499,7 @@ ArCamera.prototype.enterAr = function (success, error) {
         video.addEventListener('canplay', function () {
             if (!self.videoPlaying) {
                 self.startVideo();
-                self.startTracking(video.videoWidth, video.videoHeight);
+                self.startTracking();
                 self.videoPlaying = true;
                 if (success) success();
             }
@@ -489,7 +511,7 @@ ArCamera.prototype.enterAr = function (success, error) {
                 e.preventDefault();
                 if (!self.videoPlaying) {
                     self.startVideo();
-                    self.startTracking(video.videoWidth, video.videoHeight);
+                    self.startTracking();
                     self.videoPlaying = true;
                     if (success) success();
                 }
@@ -512,6 +534,12 @@ ArCamera.prototype.exitAr = function () {
 
 // initialize code called once per entity
 ArCamera.prototype.initialize = function () {
+    // All markers move with respect to an untransformed camera
+    // so ignore whatever transformation has been set up in the Editor
+    this.entity.setEulerAngles(0, 0, 0);
+    this.entity.setPosition(0, 0, 0);
+    this.entity.setLocalScale(1, 1, 1);
+
     if (this.cameraCalibration) {
         if (this.supportsAr()) {
             this.enterAr();
@@ -551,6 +579,12 @@ ArCamera.prototype.initialize = function () {
         this._setThresholdMode(value);
     });
 
+    this.on('attr:trackerResolution', function (value, prev) {
+        // ARToolkit doesn't seem to support recreation of ArControllers
+        // this.stopTracking();
+        // this.startTrackinng();
+    });
+
     this.on('attr:videoTexture', function (value, prev) {
         if (value) {
             this.useVideoTexture();
@@ -562,19 +596,22 @@ ArCamera.prototype.initialize = function () {
     this.on('attr:debug', function (value, prev) {
         this._setDebugMode(value);
     });
+
+    this.process = true;
 };
 
 // update code called every frame
 ArCamera.prototype.update = function(dt) {
-    // All markers move with respect to an untransformed camera
-    // so ignore whatever transformation has been set up in the Editor
-    this.entity.setEulerAngles(0, 0, 0);
-    this.entity.setPosition(0, 0, 0);
-    this.entity.setLocalScale(1, 1, 1);
-
     if (this.arController) {
         // Update the tracking
-        this.arController.process(this.video);
+        if (this.trackAlternateFrames) {
+            if (this.process) {
+                this.arController.process(this.video);
+            }
+            this.process = !this.process;
+       } else {
+            this.arController.process(this.video);
+       }
 
         // If we're displaying video via a texture, copy the video frame into the texture
         if (this.videoTexture && this.texture) {
