@@ -677,10 +677,12 @@ ArMarker.prototype.createShadow = function () {
     if (!ArMarker.shadowMaterial) {
         var material = new pc.StandardMaterial();
         material.chunks.lightDiffuseLambertPS = "float getLightDiffuse() { return 1.0; }";
-        material.diffuse.set(1, 1, 1);
+        material.chunks.outputAlphaPS = "gl_FragColor.a = dAlpha * (1.0 - dDiffuseLight.r);";
+        material.diffuse.set(0, 0, 0);
         material.specular.set(0, 0, 0);
-        material.emissive.set(1 - this.shadowStrength, 1 - this.shadowStrength, 1 - this.shadowStrength);
-        material.blendType = pc.BLEND_MULTIPLICATIVE;
+        material.emissive.set(0, 0, 0);
+        material.opacity = this.shadowStrength;
+        material.blendType = pc.BLEND_NORMAL;
         material.useGammaTonemap = false;
         material.useFog = false;
         material.useSkybox = false;
@@ -774,7 +776,7 @@ ArMarker.prototype.initialize = function () {
 
     this.on('attr:shadowStrength', function (value, prev) {
         if (ArMarker.shadowMaterial) {
-            ArMarker.shadowMaterial.emissive.set(1 - value, 1 - value, 1 - value);
+            ArMarker.shadowMaterial.opacity = this.shadowStrength;
             ArMarker.shadowMaterial.update();
         }
     });
