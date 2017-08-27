@@ -64,18 +64,6 @@ ArCamera.attributes.add('threshold', {
     title: 'Threshold',
     description: "Sets the labeling threshhold value. The default value is 100.\n\nThe current threshold mode is not affected by the setting of this value. Typically, this property is used when the labeling threshold mode is 'Manual'.\n\nThe threshold value is not relevant if threshold mode is 'Auto Adaptive'.\n\nBackground: The labeling threshold is the value which the AR library uses to differentiate between black and white portions of an ARToolKit marker. Since the actual brightness, contrast, and gamma of incoming images can vary signficantly between different cameras and lighting conditions, this value typically needs to be adjusted dynamically to a suitable midpoint between the observed values for black and white portions of the markers in the image."
 });
-ArCamera.attributes.add('videoTexture', {
-    type: 'boolean',
-    default: true,
-    title: 'Video Texture',
-    description: 'Streams the camera feed to a video texture if enabled. Otherwise, a video DOM element is used.'
-});
-ArCamera.attributes.add('debug', {
-    type: 'boolean',
-    default: false,
-    title: 'Debug Mode',
-    description: 'Enables or disables debug mode in the tracker. When enabled, a black and white debug image is generated during marker detection. The debug image is useful for visualizing the binarization process and choosing a threshold value.'
-});
 ArCamera.attributes.add('trackerResolution', {
     type: 'number',
     enum: [
@@ -84,15 +72,27 @@ ArCamera.attributes.add('trackerResolution', {
         { 'Half': 2 },
         { 'Quarter': 3 }
     ],
-    default: 0,
+    default: 2,
     title: 'Tracker Resolution',
-    description: "Controls the resolution of the tracker image. Each video frame is copied to the tracker image for marker detection. Reducing the tracker image resolution will speed up marker detection but will also make it less precise. For example, a video camera source may have a resolution of 640x480. The tracker image will have the following resolutions based on the selected option: 'Full': 640x480, 'Three Quarters': 480x360, 'Half': 320x240, 'Quarter': 160x120"
+    description: "Controls the resolution of the tracker image. Each video frame is copied to the tracker image for marker detection. Reducing the tracker image resolution will speed up marker detection but will also make it less precise. For example, a video camera source may have a resolution of 640x480. The tracker image will have the following resolutions based on the selected option: 'Full': 640x480, 'Three Quarters': 480x360, 'Half': 320x240, 'Quarter': 160x120."
 });
 ArCamera.attributes.add('trackAlternateFrames', {
     type: 'boolean',
     default: false,
     title: 'Track Alternate Frames',
     description: 'If selected, tracking is only performed on every other update. This can increase lag in tracking but will reduce CPU load.'
+});
+ArCamera.attributes.add('debugOverlay', {
+    type: 'boolean',
+    default: false,
+    title: 'Debug Overlay',
+    description: 'Enables or disables the debug overlay. When enabled, a black and white debug image is generated during marker detection. The debug image is useful for visualizing the binarization process and choosing a threshold value. The image is displayed as an overlay on top of the 3D scene.'
+});
+ArCamera.attributes.add('videoTexture', {
+    type: 'boolean',
+    default: false,
+    title: 'Video Texture',
+    description: 'Streams the camera feed to a video texture if enabled. Otherwise, a video DOM element is used.'
 });
 
 ArCamera.prototype.useDom = function () {
@@ -425,7 +425,7 @@ ArCamera.prototype._createArController = function (w, h, url) {
         this._setPatternDetectionMode(this.detectionMode);
         this._setThresholdMode(this.thresholdMode);
         this._setThreshold(this.threshold);
-        this._setDebugMode(this.debug);
+        this._setDebugMode(this.debugOverlay);
 
         this.onResize();
 
@@ -593,7 +593,7 @@ ArCamera.prototype.initialize = function () {
         }
     });
 
-    this.on('attr:debug', function (value, prev) {
+    this.on('attr:debugOverlay', function (value, prev) {
         this._setDebugMode(value);
     });
 
