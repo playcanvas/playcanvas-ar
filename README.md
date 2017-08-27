@@ -21,6 +21,15 @@ Now click [here](https://playcanv.as/p/eJ1ygzym/) for a demonstration. We recomm
 2. Fork the [AR Starter Kit](https://playcanvas.com/project/481413/overview) project (which contains the latest version of playcanvas-ar.js).
 3. Hit the launch button and see AR in action (we recommend using your mobile device!).
 
+## Configuring PlayCanvasAR in the Editor
+The playcanvas-ar.js script contains two script objects: arCamera and arMarker. The arCamera script renders a device's camera feed and tracks the feed image for AR markers. It can be added to an entity that has a camera component. The interface generated is as follows:
+
+![PlayCanvas Editor](/images/arcamera_editor_ui.png?raw=true)
+
+To create a new marker entity, simply add a script component and add the arMarker script. This will generate the following UI:
+
+![PlayCanvas Editor](/images/armarker_editor_ui.png?raw=true)
+
 ## Scripting with PlayCanvasAR
 
 The PlayCanvas Editor allows you to build your AR apps visually. But you may want to create AR powered entities programmatically. Or you may want to build AR apps by simply using the PlayCanvas Engine without the Editor. PlayCanvas AR exposes two script objects: 'arCamera' and 'arMarker'. 'Engine-only' scripting examples can be found in the examples folder.
