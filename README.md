@@ -21,6 +21,15 @@ Now click [here](https://playcanv.as/p/eJ1ygzym/) for a demonstration. We recomm
 2. Fork the [AR Starter Kit](https://playcanvas.com/project/481413/overview) project (which contains the latest version of playcanvas-ar.js).
 3. Hit the launch button and see AR in action (we recommend using your mobile device!).
 
+## Configuring PlayCanvasAR in the Editor
+The playcanvas-ar.js script contains two script objects: arCamera and arMarker. The arCamera script renders a device's camera feed and tracks the feed image for AR markers. It can be added to an entity that has a camera component. The interface generated is as follows:
+
+![PlayCanvas Editor](/images/arcamera_editor_ui.png?raw=true)
+
+To create a new marker entity, simply add a script component and add the arMarker script. This will generate the following UI:
+
+![PlayCanvas Editor](/images/armarker_editor_ui.png?raw=true)
+
 ## Scripting with PlayCanvasAR
 
 The PlayCanvas Editor allows you to build your AR apps visually. But you may want to create AR powered entities programmatically. Or you may want to build AR apps by simply using the PlayCanvas Engine without the Editor. PlayCanvas AR exposes two script objects: 'arCamera' and 'arMarker'. 'Engine-only' scripting examples can be found in the examples folder.
@@ -49,8 +58,14 @@ app.root.addChild(camera);
 | Attribute | Type | Description |
 | --- | --- | --- |
 | cameraCalibration | [pc.Asset](https://developer.playcanvas.com/en/api/pc.Asset.html) | Data file containing the calibration properties for the camera to be used. |
+| detectionMode | Number | The pattern detection determines the method by which ARToolKit matches detected squares in the video image to marker templates and/or IDs. ARToolKit can match against pictorial "template" markers, whose pattern files are created with the mk_patt utility, in either colour or mono, and additionally can match against 2D-barcode-type "matrix" markers, which have an embedded marker ID. Two different two-pass modes are also available, in which a matrix-detection pass is made first, followed by a template-matching pass. |
+| labelingMode | Number | Select between detection of black markers and white markers.\n\nARToolKit's labelling algorithm can work with both black-bordered markers on a white background ('Black Region') or white-bordered markers on a black background ('White Region'). This property allows you to specify the type of markers to look for. Note that this does not affect the pattern-detection algorithm which works on the interior of the marker. |
+| processingMode | Number | When the image processing mode is 'Frame', ARToolKit processes all pixels in each incoming image to locate markers. When the mode is 'Field', ARToolKit processes pixels in only every second pixel row and column. This is useful both for handling images from interlaced video sources (where alternate lines are assembled from alternate fields and thus have one field time-difference, resulting in a 'comb' effect) such as Digital Video cameras. The effective reduction by 75% in the pixels processed also has utility in accelerating tracking by effectively reducing the image size to one quarter size, at the cost of pose accuracy. |
 | thresholdMode | Number | The thresholding mode to use. The standard ARToolKit options are available: Manual (0), Median (1), Otsu (2), Adaptive (3). Defaults to 0 (Manual). |
 | threshold | Number | The binarization threshold is an 8-bit number that is in the range [0, 255], inclusive. The default value is 100, allowing ARToolKit to easily find markers in images that have good contrast. This value is only used when the mode is set to Manual. Defaults to 100. |
+| trackerResolution | Number | Controls the resolution of the tracker image. Each video frame is copied to the tracker image for marker detection. Reducing the tracker image resolution will speed up marker detection but will also make it less precise. For example, a video camera source may have a resolution of 640x480. The tracker image will have the following resolutions based on the selected option: 'Full': 640x480, 'Three Quarters': 480x360, 'Half': 320x240, 'Quarter': 160x120. |
+| trackAlternateFrames | Boolean | If selected, tracking is only performed on every other update. This can increase lag in tracking but will reduce CPU load. |
+| debugOverlay | Boolean | Enables or disables the debug overlay. When enabled, a black and white debug image is generated during marker detection. The debug image is useful for visualizing the binarization process and choosing a threshold value. The image is displayed as an overlay on top of the 3D scene. |
 | videoTexture | Boolean | Streams the camera feed to a video texture if enabled. Otherwise, a video DOM element is used. Defaults to true. |
 
 ### arMarker
