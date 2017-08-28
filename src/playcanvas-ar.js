@@ -1,3 +1,4 @@
+/* jshint multistr: true */
 ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////// AR CAMERA //////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -20,7 +21,12 @@ ArCamera.attributes.add('detectionMode', {
     ],
     default: 0,
     title: 'Detection Mode',
-    description: 'The pattern detection determines the method by which ARToolKit matches detected squares in the video image to marker templates and/or IDs. ARToolKit can match against pictorial "template" markers, whose pattern files are created with the mk_patt utility, in either colour or mono, and additionally can match against 2D-barcode-type "matrix" markers, which have an embedded marker ID. Two different two-pass modes are also available, in which a matrix-detection pass is made first, followed by a template-matching pass.'
+    description: 'The pattern detection determines the method by which ARToolKit matches detected squares \
+                  in the video image to marker templates and/or IDs. ARToolKit can match against pictorial \
+                  "template" markers, whose pattern files are created with the mk_patt utility, in either \
+                  colour or mono, and additionally can match against 2D-barcode-type "matrix" markers, which \
+                  have an embedded marker ID. Two different two-pass modes are also available, in which a \
+                  matrix-detection pass is made first, followed by a template-matching pass.'
 });
 ArCamera.attributes.add('labelingMode', { 
     type: 'number',
@@ -30,7 +36,11 @@ ArCamera.attributes.add('labelingMode', {
     ],
     default: 1,
     title: 'Labeling Mode',
-    description: "Select between detection of black markers and white markers.\n\nARToolKit's labelling algorithm can work with both black-bordered markers on a white background ('Black Region') or white-bordered markers on a black background ('White Region'). This property allows you to specify the type of markers to look for. Note that this does not affect the pattern-detection algorithm which works on the interior of the marker."
+    description: 'Select between detection of black markers and white markers.\n\nARToolKits labelling \
+                  algorithm can work with both black-bordered markers on a white background ("Black Region") \
+                  or white-bordered markers on a black background ("White Region"). This property allows \
+                  you to specify the type of markers to look for. Note that this does not affect the \
+                  pattern-detection algorithm which works on the interior of the marker.'
 });
 ArCamera.attributes.add('processingMode', { 
     type: 'number', 
@@ -40,7 +50,13 @@ ArCamera.attributes.add('processingMode', {
     ],
     default: 0,
     title: 'Processing Mode',
-    description: "When the image processing mode is 'Frame', ARToolKit processes all pixels in each incoming image to locate markers. When the mode is 'Field', ARToolKit processes pixels in only every second pixel row and column. This is useful both for handling images from interlaced video sources (where alternate lines are assembled from alternate fields and thus have one field time-difference, resulting in a 'comb' effect) such as Digital Video cameras. The effective reduction by 75% in the pixels processed also has utility in accelerating tracking by effectively reducing the image size to one quarter size, at the cost of pose accuracy."
+    description: 'When the image processing mode is "Frame", ARToolKit processes all pixels in each incoming \
+                  image to locate markers. When the mode is "Field", ARToolKit processes pixels in only every \
+                  second pixel row and column. This is useful both for handling images from interlaced video \
+                  sources (where alternate lines are assembled from alternate fields and thus have one field \
+                  time-difference, resulting in a "comb" effect) such as Digital Video cameras. The effective \
+                  reduction by 75% in the pixels processed also has utility in accelerating tracking by \
+                  effectively reducing the image size to one quarter size, at the cost of pose accuracy.'
 });
 ArCamera.attributes.add('thresholdMode', { 
     type: 'number', 
@@ -53,7 +69,8 @@ ArCamera.attributes.add('thresholdMode', {
     ],
     default: 0,
     title: 'Threshold Mode',
-    description: 'The thresholding mode to use. The standard ARToolKit options are available: Manual, Median, Otsu, Adaptive, Bracketing.'
+    description: 'The thresholding mode to use. The standard ARToolKit options are available: Manual, Median, \
+                  Otsu, Adaptive, Bracketing.'
 });
 ArCamera.attributes.add('threshold', {
     type: 'number',
@@ -62,7 +79,14 @@ ArCamera.attributes.add('threshold', {
     precision: 0,
     default: 100,
     title: 'Threshold',
-    description: "Sets the labeling threshhold value. The default value is 100.\n\nThe current threshold mode is not affected by the setting of this value. Typically, this property is used when the labeling threshold mode is 'Manual'.\n\nThe threshold value is not relevant if threshold mode is 'Auto Adaptive'.\n\nBackground: The labeling threshold is the value which the AR library uses to differentiate between black and white portions of an ARToolKit marker. Since the actual brightness, contrast, and gamma of incoming images can vary signficantly between different cameras and lighting conditions, this value typically needs to be adjusted dynamically to a suitable midpoint between the observed values for black and white portions of the markers in the image."
+    description: "Sets the labeling threshhold value. The default value is 100.\n\nThe current threshold mode \
+                  is not affected by the setting of this value. Typically, this property is used when the labeling \
+                  threshold mode is 'Manual'.\n\nThe threshold value is not relevant if threshold mode is \
+                  'Auto Adaptive'.\n\nBackground: The labeling threshold is the value which the AR library uses to \
+                  differentiate between black and white portions of an ARToolKit marker. Since the actual brightness, \
+                  contrast, and gamma of incoming images can vary signficantly between different cameras and lighting \
+                  conditions, this value typically needs to be adjusted dynamically to a suitable midpoint between \
+                  the observed values for black and white portions of the markers in the image."
 });
 ArCamera.attributes.add('trackerResolution', {
     type: 'number',
@@ -74,19 +98,26 @@ ArCamera.attributes.add('trackerResolution', {
     ],
     default: 2,
     title: 'Tracker Resolution',
-    description: "Controls the resolution of the tracker image. Each video frame is copied to the tracker image for marker detection. Reducing the tracker image resolution will speed up marker detection but will also make it less precise. For example, a video camera source may have a resolution of 640x480. The tracker image will have the following resolutions based on the selected option: 'Full': 640x480, 'Three Quarters': 480x360, 'Half': 320x240, 'Quarter': 160x120."
+    description: "Controls the resolution of the tracker image. Each video frame is copied to the tracker image for \
+                  marker detection. Reducing the tracker image resolution will speed up marker detection but will \
+                  also make it less precise. For example, a video camera source may have a resolution of 640x480. \
+                  The tracker image will have the following resolutions based on the selected option: 'Full': 640x480, \
+                  'Three Quarters': 480x360, 'Half': 320x240, 'Quarter': 160x120."
 });
 ArCamera.attributes.add('trackAlternateFrames', {
     type: 'boolean',
     default: false,
     title: 'Track Alternate Frames',
-    description: 'If selected, tracking is only performed on every other update. This can increase lag in tracking but will reduce CPU load.'
+    description: 'If selected, tracking is only performed on every other update. This can increase lag in tracking but \
+                  will reduce CPU load.'
 });
 ArCamera.attributes.add('debugOverlay', {
     type: 'boolean',
     default: false,
     title: 'Debug Overlay',
-    description: 'Enables or disables the debug overlay. When enabled, a black and white debug image is generated during marker detection. The debug image is useful for visualizing the binarization process and choosing a threshold value. The image is displayed as an overlay on top of the 3D scene.'
+    description: 'Enables or disables the debug overlay. When enabled, a black and white debug image is generated during \
+                  marker detection. The debug image is useful for visualizing the binarization process and choosing a \
+                  threshold value. The image is displayed as an overlay on top of the 3D scene.'
 });
 ArCamera.attributes.add('videoTexture', {
     type: 'boolean',
