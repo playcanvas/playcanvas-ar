@@ -10,6 +10,10 @@ Before you begin, print out the following markers: [Hiro](https://github.com/art
 
 Now click [here](https://playcanv.as/p/eJ1ygzym/) for a demonstration. We recommend running it on mobile. If you use iOS, you'll need iOS 11 which is now in [public beta](https://beta.apple.com/sp/betaprogram/).
 
+Or check out a little video:
+
+[![YouTube video](/images/youtube_preview.png?raw=true)](http://www.youtube.com/watch?v=2Yo6hqr_tZw "Video Title")
+
 ## Features
 
 * **Amazing Performance** - PlayCanvasAR delivers 60 frames per second, even on mobile.
