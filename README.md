@@ -8,7 +8,7 @@ But if you want to create something more interactive, you can call on the full p
 ## Demo
 Before you begin, print out the following markers: [Hiro](https://github.com/artoolkit/artoolkit5/blob/master/doc/patterns/Hiro%20pattern.pdf) and [Kanji](https://github.com/artoolkit/artoolkit5/blob/master/doc/patterns/Kanji%20pattern.pdf).
 
-Now click [here](https://playcanv.as/p/eJ1ygzym/) for a demonstration. We recommend running it on mobile. If you use iOS, you'll need iOS 11 which is now in [public beta](https://beta.apple.com/sp/betaprogram/).
+Now click [here](https://playcanv.as/p/eJ1ygzym/) for a demonstration. We recommend running it on mobile. If you use iOS, you'll need to ensure you have upgraded to iOS 11, which is required to access the camera from Safari.
 
 Or check out a little video:
 
