@@ -28,6 +28,25 @@ ArCamera.attributes.add('detectionMode', {
                   have an embedded marker ID. Two different two-pass modes are also available, in which a \
                   matrix-detection pass is made first, followed by a template-matching pass.'
 });
+ArCamera.attributes.add('matrixCodeType', { 
+    type: 'number', 
+    enum: [
+        { '3x3': 0 },
+        { '3x3 Hamming 63': 1 },
+        { '3x3 Parity 65': 2 },
+        { '4x4': 3 },
+        { '4x4 BCH 13_9_3': 4 },
+        { '4x4 BCH 13_5_5': 5 }
+    ],
+    default: 0,
+    title: 'Matrix Code Type',
+    description: 'Set the size and ECC algorithm to be used for matrix code (2D barcode) marker detection.\n\n \
+                  When matrix-code (2D barcode) marker detection is enabled (see Detection Mode) \
+                  then the size of the barcode pattern and the type of error checking and correction (ECC) \
+                  with which the markers were produced can be set via this function.\n\n \
+                  This setting is global to a given ARHandle; It is not possible to have two different matrix \
+                  code types in use at once.'
+});
 ArCamera.attributes.add('labelingMode', { 
     type: 'number',
     enum: [
@@ -64,8 +83,7 @@ ArCamera.attributes.add('thresholdMode', {
         { 'Manual': 0 },
         { 'Auto Median': 1 },
         { 'Auto Otsu': 2 },
-        { 'Auto Adaptive': 3 },
-        { 'Auto Bracketing': 4 }
+        { 'Auto Adaptive': 3 }
     ],
     default: 0,
     title: 'Threshold Mode',
@@ -382,6 +400,34 @@ ArCamera.prototype._setLabelingMode = function (labelingMode) {
     }
 };
 
+ArCamera.prototype._setMatrixCodeType = function (matrixCodeType) {
+    if (this.arController) {
+        switch (matrixCodeType) {
+            case 0:
+                this.arController.setMatrixCodeType(artoolkit.AR_MATRIX_CODE_3x3);
+                break;
+            case 1:
+                this.arController.setMatrixCodeType(artoolkit.AR_MATRIX_CODE_3x3_HAMMING63);
+                break;
+            case 2:
+                this.arController.setMatrixCodeType(artoolkit.AR_MATRIX_CODE_3x3_PARITY65);
+                break;
+            case 3:
+                this.arController.setMatrixCodeType(artoolkit.AR_MATRIX_CODE_4x4);
+                break;
+            case 4:
+                this.arController.setMatrixCodeType(artoolkit.AR_MATRIX_CODE_4x4_BCH_13_9_3);
+                break;
+            case 5:
+                this.arController.setMatrixCodeType(artoolkit.AR_MATRIX_CODE_4x4_BCH_13_5_5);
+                break;
+            default:
+                console.error("ERROR: " + matrixCodeType + " is an invalid matrix code type.");
+                break;
+        }
+    }
+};
+
 ArCamera.prototype._setPatternDetectionMode = function (detectionMode) {
     if (this.arController) {
         switch (detectionMode) {
@@ -430,9 +476,6 @@ ArCamera.prototype._setThresholdMode = function (thresholdMode) {
             case 3:
                 this.arController.setThresholdMode(artoolkit.AR_LABELING_THRESH_MODE_AUTO_ADAPTIVE);
                 break;
-            case 4:
-                this.arController.setThresholdMode(artoolkit.AR_LABELING_THRESH_MODE_AUTO_BRACKETING);
-                break;
             default:
                 console.error("ERROR: " + thresholdMode + " is an invalid threshold mode.");
                 break;
@@ -451,12 +494,13 @@ ArCamera.prototype._createArController = function (w, h, url) {
 
         this.arController.setProjectionNearPlane(this.entity.camera.nearClip);
         this.arController.setProjectionFarPlane(this.entity.camera.farClip);
+        this._setDebugMode(this.debugOverlay);
         this._setImageProcMode(this.processingMode);
         this._setLabelingMode(this.labelingMode);
+        this._setMatrixCodeType(this.matrixCodeType);
         this._setPatternDetectionMode(this.detectionMode);
-        this._setThresholdMode(this.thresholdMode);
         this._setThreshold(this.threshold);
-        this._setDebugMode(this.debugOverlay);
+        this._setThresholdMode(this.thresholdMode);
 
         this.onResize();
 
@@ -511,10 +555,13 @@ ArCamera.prototype.enterAr = function (success, error) {
 
         // Create the video element to receive the camera stream
         var video = document.createElement('video');
+
         video.setAttribute('autoplay', '');
         video.setAttribute('muted', '');
-        video.setAttribute('playsinline', ''); // This is critical for iOS or the video initially goes fullscreen
+        // This is critical for iOS or the video initially goes fullscreen
+        video.setAttribute('playsinline', '');
         video.srcObject = stream;
+
         self.video = video;
 
         // Check for both video and canvas resizing
@@ -590,16 +637,24 @@ ArCamera.prototype.initialize = function () {
         }
     });
 
+    this.on('attr:debugOverlay', function (value, prev) {
+        this._setDebugMode(value);
+    });
+
     this.on('attr:detectionMode', function (value, prev) {
         this._setPatternDetectionMode(value);
     });
 
-    this.on('attr:processingMode', function (value, prev) {
-        this._setImageProcMode(value);
-    });
-
     this.on('attr:labelingMode', function (value, prev) {
         this._setLabelingMode(value);
+    });
+
+    this.on('attr:matrixCodeType', function (value, prev) {
+        this._setMatrixCodeType(value);
+    });
+
+    this.on('attr:processingMode', function (value, prev) {
+        this._setImageProcMode(value);
     });
 
     this.on('attr:threshold', function (value, prev) {
@@ -622,10 +677,6 @@ ArCamera.prototype.initialize = function () {
         } else {
             this.useDom();
         }
-    });
-
-    this.on('attr:debugOverlay', function (value, prev) {
-        this._setDebugMode(value);
     });
 
     this.process = true;
@@ -662,6 +713,12 @@ ArMarker.attributes.add('pattern', {
     assetType: 'binary',
     title: 'Pattern',
     description: 'The marker pattern to track. This can be the Hiro or Kanji markers or a marker you have generated yourself.'
+});
+ArMarker.attributes.add('id', {
+    type: 'number',
+    default: 0,
+    title: 'Barcode ID',
+    description: 'The barcode ID. If no pattern template is set, the marker is a barcode.'
 });
 ArMarker.attributes.add('width', {
     type: 'number',
@@ -761,11 +818,14 @@ ArMarker.prototype.initialize = function () {
     this.lastSeen = -1;
 
     this.app.on('trackinginitialized', function (arController) {
-        arController.loadMarker(self.pattern.getFileUrl(), function (markerId) {
-            self.markerId = markerId;
-        });
+        if (self.pattern) {
+            arController.loadMarker(self.pattern.getFileUrl(), function (markerId) {
+                self.markerId = markerId;
+            });
+        }
         arController.addEventListener('getMarker', function (ev) {
-            if (ev.data.type === artoolkit.PATTERN_MARKER && ev.data.marker.idPatt === self.markerId) {
+            if ((self.pattern && ev.data.type === artoolkit.PATTERN_MARKER && ev.data.marker.idPatt === self.markerId) ||
+                (!self.pattern && ev.data.type === artoolkit.BARCODE_MARKER && ev.data.marker.id === self.id)) {
                 // Set the marker entity position and rotat ion from ARToolkit
                 self.markerMatrix.data.set(ev.data.matrix);
                 if (arController.orientation === 'portrait') {
