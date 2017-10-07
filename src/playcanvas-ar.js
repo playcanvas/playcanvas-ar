@@ -714,11 +714,11 @@ ArMarker.attributes.add('pattern', {
     title: 'Pattern',
     description: 'The marker pattern to track. This can be the Hiro or Kanji markers or a marker you have generated yourself.'
 });
-ArMarker.attributes.add('id', {
+ArMarker.attributes.add('matrixId', {
     type: 'number',
     default: 0,
-    title: 'Barcode ID',
-    description: 'The barcode ID. If no pattern template is set, the marker is a barcode.'
+    title: 'Matrix ID',
+    description: 'The matrix ID. If no pattern template is set, the marker is a matrix.'
 });
 ArMarker.attributes.add('width', {
     type: 'number',
@@ -824,10 +824,13 @@ ArMarker.prototype.initialize = function () {
             });
         }
         arController.addEventListener('getMarker', function (ev) {
-            if ((self.pattern && ev.data.type === artoolkit.PATTERN_MARKER && ev.data.marker.idPatt === self.markerId) ||
-                (!self.pattern && ev.data.type === artoolkit.BARCODE_MARKER && ev.data.marker.id === self.id)) {
+            var data = ev.data;
+            var type = data.type;
+            var marker = data.marker;
+            if ((self.pattern && type === artoolkit.PATTERN_MARKER && marker.idPatt === self.markerId) ||
+                (!self.pattern && type === artoolkit.BARCODE_MARKER && marker.idMatrix === self.matrixId)) {
                 // Set the marker entity position and rotat ion from ARToolkit
-                self.markerMatrix.data.set(ev.data.matrix);
+                self.markerMatrix.data.set(data.matrix);
                 if (arController.orientation === 'portrait') {
                     self.finalMatrix.mul2(self.portraitRot, self.markerMatrix);
                 } else {
