@@ -829,7 +829,7 @@ ArMarker.prototype.initialize = function () {
             var marker = data.marker;
             if ((self.pattern && type === artoolkit.PATTERN_MARKER && marker.idPatt === self.markerId) ||
                 (!self.pattern && type === artoolkit.BARCODE_MARKER && marker.idMatrix === self.matrixId)) {
-                // Set the marker entity position and rotat ion from ARToolkit
+                // Set the marker entity position and rotation from ARToolkit
                 self.markerMatrix.data.set(data.matrix);
                 if (arController.orientation === 'portrait') {
                     self.finalMatrix.mul2(self.portraitRot, self.markerMatrix);
