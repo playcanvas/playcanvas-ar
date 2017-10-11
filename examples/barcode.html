@@ -1,0 +1,96 @@
+<!doctype html>
+<html>
+    <head>
+        <script src="http://code.playcanvas.com/playcanvas-latest.js"></script>
+        <script src="../artoolkit/artoolkit.min.js"></script>
+    </head>
+    <body style="overflow: hidden;">
+        <script>
+            // Create the canvas for our application
+            var canvas = document.createElement("canvas");
+            canvas.style.position = "absolute";
+            canvas.style.top = "0px";
+            canvas.style.left = "0px";
+            document.body.appendChild(canvas);
+
+            // Create the application and start the update loop
+            var app = new pc.Application(canvas);
+            app.setCanvasFillMode(pc.FILLMODE_FILL_WINDOW);
+            app.setCanvasResolution(pc.RESOLUTION_AUTO);
+            app.start();
+
+            // Lift scene ambient lighting up from black
+            app.scene.ambientLight = new pc.Color(0.2, 0.2, 0.2);
+
+            // Load PlayCanvasAR library scripts
+            app.assets.loadFromUrl("../src/playcanvas-ar.js", "script", function (err, asset) {
+
+                // Create the AR-enabled camera using generic camera calibration settings
+                app.assets.loadFromUrl("../artoolkit/calibration/camera_para.dat", "binary", function (err, asset) {
+
+                    var camera = new pc.Entity("AR Camera");
+                    camera.addComponent("camera", {
+                        clearColor: new pc.Color(0, 0, 0, 0)
+                    });
+                    camera.addComponent("script");
+                    camera.script.create("arCamera", {
+                        attributes: {
+                            cameraCalibration: asset,
+                            detectionMode: 2,     // Matrix
+                            matrixCodeType: 0,    // 3x3
+                            labelingMode: 1,      // Black Region
+                            processingMode: 0,    // Frame
+                            thresholdMode: 0,     // Manual
+                            threshold: 100,
+                            trackerResolution: 0, // Full
+                            trackAlternateFrames: false,
+                            debugOverlay: false,
+                            videoTexture: false
+                        }
+                    });
+                    app.root.addChild(camera);
+
+                    var barcode = new pc.Entity("Barcode Marker");
+                    barcode.addComponent("script");
+                    barcode.script.create("arMarker", {
+                        attributes: {
+                            matrixId: 20,
+                            width: 1,
+                            deactivationTime: 0.25,
+                            shadow: true,
+                            shadowStrength: 0.5
+                        }
+                    });
+                    app.root.addChild(barcode);
+
+                    // Create a box as a child of the Hiro marker
+                    var box = new pc.Entity("Box");
+                    box.addComponent("model", {
+                        type: "box"
+                    });
+                    box.setLocalPosition(0, 0.5, 0);
+                    barcode.addChild(box);
+
+                    // Create a directional light
+                    var light = new pc.Entity();
+                    light.addComponent("light", {
+                        type: "directional",
+                        color: new pc.Color(1, 1, 1),
+                        castShadows: true,
+                        shadowBias: 0.2,
+                        normalOffsetBias: 0.1,
+                        shadowDistance: 10,
+                        shadowType: pc.SHADOW_PCF5
+                    });
+                    light.setLocalEulerAngles(22, 0, -16);
+                    barcode.addChild(light);
+                });
+            });
+
+            // Resize the canvas when the window is resized
+            window.addEventListener("resize", function () {
+                app.resizeCanvas(window.innerWidth, window.innerHeight);
+            });
+        </script>
+    </body>
+</html>

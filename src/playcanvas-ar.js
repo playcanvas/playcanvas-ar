@@ -56,7 +56,7 @@ ArCamera.attributes.add('labelingMode', {
     ],
     default: 1,
     title: 'Labeling Mode',
-    description: 'Select between detection of black markers and white markers.\n\nARToolKits labeling \
+    description: 'Select between detection of black markers and white markers.\n\nARToolKit\'s labeling \
                   algorithm can work with both black-bordered markers on a white background ("Black Region") \
                   or white-bordered markers on a black background ("White Region"). This property allows \
                   you to specify the type of markers to look for. Note that this does not affect the \
@@ -741,7 +741,7 @@ ArMarker.attributes.add('shadow', {
 });
 ArMarker.attributes.add('shadowStrength', {
     type: 'number',
-    default: 1,
+    default: 0.5,
     min: 0,
     max: 1,
     title: 'Shadow Strength',

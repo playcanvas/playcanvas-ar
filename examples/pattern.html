@@ -23,7 +23,7 @@
             app.scene.ambientLight = new pc.Color(0.2, 0.2, 0.2);
 
             // Load PlayCanvasAR library scripts
-            app.assets.loadFromUrl("../playcanvas-ar.js", "script", function (err, asset) {
+            app.assets.loadFromUrl("../src/playcanvas-ar.js", "script", function (err, asset) {
 
                 // Create the AR-enabled camera using generic camera calibration settings
                 app.assets.loadFromUrl("../artoolkit/calibration/camera_para.dat", "binary", function (err, asset) {
@@ -45,7 +45,7 @@
                 });
 
                 // Load the Hiro marker pattern and create a marker entity with it
-                app.assets.loadFromUrl("../artoolkit/patterns/patt.hiro", "binary", function (err, asset) {
+                app.assets.loadFromUrl("../artoolkit/markers/pattern/hiro.patt", "binary", function (err, asset) {
 
                     var hiro = new pc.Entity("Hiro Marker");
                     hiro.addComponent("script");
