@@ -26,7 +26,8 @@ ArCamera.attributes.add('detectionMode', {
                   "template" markers, whose pattern files are created with the mk_patt utility, in either \
                   colour or mono, and additionally can match against 2D-barcode-type "matrix" markers, which \
                   have an embedded marker ID. Two different two-pass modes are also available, in which a \
-                  matrix-detection pass is made first, followed by a template-matching pass.'
+                  matrix-detection pass is made first, followed by a template-matching pass. Defaults to \
+                  "Color Template".'
 });
 ArCamera.attributes.add('matrixCodeType', { 
     type: 'number', 
@@ -44,8 +45,8 @@ ArCamera.attributes.add('matrixCodeType', {
                   When matrix-code (2D barcode) marker detection is enabled (see Detection Mode) \
                   then the size of the barcode pattern and the type of error checking and correction (ECC) \
                   with which the markers were produced can be set via this function.\n\n \
-                  This setting is global to a given ARHandle; It is not possible to have two different matrix \
-                  code types in use at once.'
+                  This setting is global to a given AR Camera; It is not possible to have two different matrix \
+                  code types in use at once. Defaults to 3x3.'
 });
 ArCamera.attributes.add('labelingMode', { 
     type: 'number',
@@ -55,7 +56,7 @@ ArCamera.attributes.add('labelingMode', {
     ],
     default: 1,
     title: 'Labeling Mode',
-    description: 'Select between detection of black markers and white markers.\n\nARToolKits labelling \
+    description: 'Select between detection of black markers and white markers.\n\nARToolKits labeling \
                   algorithm can work with both black-bordered markers on a white background ("Black Region") \
                   or white-bordered markers on a black background ("White Region"). This property allows \
                   you to specify the type of markers to look for. Note that this does not affect the \
@@ -114,7 +115,7 @@ ArCamera.attributes.add('trackerResolution', {
         { 'Half': 2 },
         { 'Quarter': 3 }
     ],
-    default: 2,
+    default: 0,
     title: 'Tracker Resolution',
     description: "Controls the resolution of the tracker image. Each video frame is copied to the tracker image for \
                   marker detection. Reducing the tracker image resolution will speed up marker detection but will \
@@ -718,25 +719,25 @@ ArMarker.attributes.add('matrixId', {
     type: 'number',
     default: 0,
     title: 'Matrix ID',
-    description: 'The matrix ID. If no pattern template is set, the marker is a matrix.'
+    description: 'The matrix ID. If no pattern template is set, the marker is a matrix. Defaults to 0.'
 });
 ArMarker.attributes.add('width', {
     type: 'number',
     default: 1,
     title: 'Width',
-    description: 'The width of the marker'
+    description: 'The width of the marker. Defaults to 1.'
 });
 ArMarker.attributes.add('deactivationTime', {
     type: 'number',
     default: 0.25,
     title: 'Deactivation Time',
-    description: 'The time in seconds from when a marker is lost before its children are deactivated.'
+    description: 'The time in seconds from when a marker is lost before its children are deactivated. Defaults to 0.25.'
 });
 ArMarker.attributes.add('shadow', {
     type: 'boolean',
     default: true,
     title: 'Shadow',
-    description: 'Enable this option to generate shadows in the plane of the marker that blend with the camera feed.'
+    description: 'Enable this option to generate shadows in the plane of the marker that blend with the camera feed. Defaults to true.'
 });
 ArMarker.attributes.add('shadowStrength', {
     type: 'number',
@@ -744,7 +745,7 @@ ArMarker.attributes.add('shadowStrength', {
     min: 0,
     max: 1,
     title: 'Shadow Strength',
-    description: 'Control the strength of the shadow. 1 is full strength and 0 is disabled.'
+    description: 'Control the strength of the shadow. 1 is full strength and 0 is disabled. Defaults to 0.5.'
 });
 
 ArMarker.shadowMaterial = null;
