@@ -51,8 +51,15 @@ camera.addComponent("script");
 camera.script.create("arCamera", {
     attributes: {
         cameraCalibration: asset,
-        thresholdMode: 0,
+        detectionMode: 0,     // Color Template
+        matrixCodeType: 0,    // 3x3
+        labelingMode: 1,      // Black Region
+        processingMode: 0,    // Frame
+        thresholdMode: 0,     // Manual
         threshold: 100,
+        trackerResolution: 0, // Full
+        trackAlternateFrames: false,
+        debugOverlay: false,
         videoTexture: true
     }
 });
@@ -62,7 +69,8 @@ app.root.addChild(camera);
 | Attribute | Type | Description |
 | --- | --- | --- |
 | cameraCalibration | [pc.Asset](https://developer.playcanvas.com/en/api/pc.Asset.html) | Data file containing the calibration properties for the camera to be used. |
-| detectionMode | Number | The pattern detection determines the method by which ARToolKit matches detected squares in the video image to marker templates and/or IDs. ARToolKit can match against pictorial "template" markers, whose pattern files are created with the mk_patt utility, in either colour or mono, and additionally can match against 2D-barcode-type "matrix" markers, which have an embedded marker ID. Two different two-pass modes are also available, in which a matrix-detection pass is made first, followed by a template-matching pass. |
+| detectionMode | Number | The pattern detection determines the method by which ARToolKit matches detected squares in the video image to marker templates and/or IDs. ARToolKit can match against pictorial "template" markers, whose pattern files are created with the mk_patt utility, in either colour or mono, and additionally can match against 2D-barcode-type "matrix" markers, which have an embedded marker ID. Two different two-pass modes are also available, in which a matrix-detection pass is made first, followed by a template-matching pass. Defaults to 0 (Color Template). |
+| matrixCodeType | Number | Set the size and ECC algorithm to be used for matrix code (2D barcode) marker detection. When matrix-code (2D barcode) marker detection is enabled (see Detection Mode) then the size of the barcode pattern and the type of error checking and correction (ECC) with which the markers were produced can be set via this function. This setting is global to a given AR Camera; It is not possible to have two different matrix code types in use at once. Defaults to 0 (3x3). |
 | labelingMode | Number | Select between detection of black markers and white markers.\n\nARToolKit's labelling algorithm can work with both black-bordered markers on a white background ('Black Region') or white-bordered markers on a black background ('White Region'). This property allows you to specify the type of markers to look for. Note that this does not affect the pattern-detection algorithm which works on the interior of the marker. |
 | processingMode | Number | When the image processing mode is 'Frame', ARToolKit processes all pixels in each incoming image to locate markers. When the mode is 'Field', ARToolKit processes pixels in only every second pixel row and column. This is useful both for handling images from interlaced video sources (where alternate lines are assembled from alternate fields and thus have one field time-difference, resulting in a 'comb' effect) such as Digital Video cameras. The effective reduction by 75% in the pixels processed also has utility in accelerating tracking by effectively reducing the image size to one quarter size, at the cost of pose accuracy. |
 | thresholdMode | Number | The thresholding mode to use. The standard ARToolKit options are available: Manual (0), Median (1), Otsu (2), Adaptive (3). Defaults to 0 (Manual). |
@@ -82,6 +90,7 @@ hiro.addComponent("script");
 hiro.script.create("arMarker", {
     attributes: {
         pattern: asset,
+        matrixId: 0,
         width: 1,
         deactivationTime: 0.25,
         shadow: true,
@@ -94,6 +103,7 @@ app.root.addChild(hiro);
 | Attribute | Type | Description |
 | --- | --- | --- |
 | pattern | [pc.Asset](https://developer.playcanvas.com/en/api/pc.Asset.html) | The marker pattern to track. This can be the Hiro or Kanji markers or a marker you have generated yourself. |
+| matrixId | Number | The matrix ID. If no pattern template is set, the marker is a matrix. Defaults to 0. |
 | width | Number | The width of the marker. Defaults to 1. |
 | deactivationTime | Number | The time in seconds from when a marker is lost before its children are deactivated. Defaults to 0.25. |
 | shadow | Boolean | Enable this option to generate shadows in the plane of the marker that blend with the camera feed. Defaults to true. |
