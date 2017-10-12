@@ -60,7 +60,7 @@ camera.script.create("arCamera", {
         trackerResolution: 0, // Full
         trackAlternateFrames: false,
         debugOverlay: false,
-        videoTexture: true
+        videoTexture: false
     }
 });
 app.root.addChild(camera);
@@ -78,7 +78,7 @@ app.root.addChild(camera);
 | trackerResolution | Number | Controls the resolution of the tracker image. Each video frame is copied to the tracker image for marker detection. Reducing the tracker image resolution will speed up marker detection but will also make it less precise. For example, a video camera source may have a resolution of 640x480. The tracker image will have the following resolutions based on the selected option: 'Full': 640x480, 'Three Quarters': 480x360, 'Half': 320x240, 'Quarter': 160x120. |
 | trackAlternateFrames | Boolean | If selected, tracking is only performed on every other update. This can increase lag in tracking but will reduce CPU load. |
 | debugOverlay | Boolean | Enables or disables the debug overlay. When enabled, a black and white debug image is generated during marker detection. The debug image is useful for visualizing the binarization process and choosing a threshold value. The image is displayed as an overlay on top of the 3D scene. |
-| videoTexture | Boolean | Streams the camera feed to a video texture if enabled. Otherwise, a video DOM element is used. Defaults to true. |
+| videoTexture | Boolean | Streams the camera feed to a video texture if enabled. Otherwise, a video DOM element is used. Defaults to false. |
 
 ### arMarker
 
