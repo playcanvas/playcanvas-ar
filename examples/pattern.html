@@ -36,9 +36,15 @@
                     camera.script.create("arCamera", {
                         attributes: {
                             cameraCalibration: asset,
-                            thresholdMode: 0, // Manual
+                            detectionMode: 1,     // Mono template
+                            labelingMode: 1,      // Black Region
+                            processingMode: 0,    // Frame
+                            thresholdMode: 0,     // Manual
                             threshold: 100,
-                            videoTexture: true
+                            trackerResolution: 0, // Full
+                            trackAlternateFrames: false,
+                            debugOverlay: false,
+                            videoTexture: false
                         }
                     });
                     app.root.addChild(camera);
